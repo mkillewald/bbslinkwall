@@ -53,4 +53,4 @@ Use at your own risk.
 6.  That's it!
 
 **************************************************************************
-### -X-caliber BBS telnet://bbs.aholix.net:6400
+### -X-caliber BBS telnet://bbs.aholix.net:6800
