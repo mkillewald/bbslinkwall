@@ -1,4 +1,4 @@
-# CNet BBSLink Wall 2.0.0   
+# C-Net BBSLink Wall 2.0.0   
 A C-Net Pfile used to seamlessly connect a C-Net Amiga BBS to the BBSLink.net networked Grafitti Wall. 
 http://www.bbslink.net/sysop/wall.php
 
