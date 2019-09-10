@@ -4,7 +4,7 @@ Author:       k1ds3ns4t10n (Mike Killewald)
 Type:         comm/cnet
 Version:      2.0.0
 Replaces:     comm/cnet/bbslinkwall.lha
-Requires:     comm/www/http_get.lha
+Requires:     comm/tcp/http_get.lha
 Architecture: generic
 Distribution: Aminet
 
