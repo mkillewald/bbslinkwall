@@ -40,8 +40,8 @@ Use at your own risk.
     Authorization Code, and Scheme Code. Copy and paste these values
     from that email into these fields in the bbslinkwall script:
 
-    b.SystemCode='yoursystemcode'
-    b.AuthorizationCode='yourauthcode'
+    b.SystemCode='yoursystemcode'   
+    b.AuthorizationCode='yourauthcode'   
     b.SchemeCode='yourschemecode'
     
 5.  Add a line to your SYSTEXT:sys.welcome file like this:
