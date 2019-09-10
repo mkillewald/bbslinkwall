@@ -1,0 +1,770 @@
+/*                CNet BBSLink Wall  Version 2.0.0                   */
+/*                                                                   */
+/*  Used to seamlessly connect a CNet Amiga BBS to the BBSLink.net   */
+/*  networked Grafitti Wall.                                         */
+/*                                                                   */
+/*  Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019    */
+/*                                     bbs.aholix.net:6800           */
+/*                                                                   */
+/*  Version 1.0.0 written by Link of CheckSum Acknowledged BBS on    */
+/*  3 Feb 2018                                                       */
+/*                                                                   */
+/*  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :( */
+/*                                                                   */
+/*  Use at your own risk.                                            */
+/*********************************************************************/
+options results;signal on SYNTAX;signal on ERROR;signal on IOERR
+PARSE ARG Arguments
+
+/*  Installation Instructions:
+
+1.  Create a folder called 'BBSLink' in your PFiles: directory.   
+    Copy this file there.
+    
+2.  Download http_get from Aminet and install in C:
+    https://aminet.net/package/comm/tcp/http_get
+
+3.  Register on bbslink.net as a sysop.  If you have already done 
+    so when you registered for the door game server, you will need
+    to use the information you got from that time you registered.
+
+4.  You will receive an email from them with your System Code,
+    Authorization Code, and Scheme Code. Copy and paste these values 
+    from that email down below where indicated in SysOp Configuralble
+    Options.
+    
+5.  Add a line to your SYSTEXT:sys.welcome file like this:
+    
+    Q#0 pfiles:bbslink/bbslinkwall}
+
+    ^ NOTE: "Q" here is a ctrl-Q
+     
+6.  That's it!  
+
+***************************************************************************/
+/* SysOp Configurable Options *********************************************/
+
+/* Enter information from the email you received here */ 
+b.SystemCode       ='yourcodehere' /* <--Enter your System Code */ 
+b.AuthorizationCode='yourcodehere' /* <--Enter your Authorization Code */
+b.SchemeCode       ='yourcodehere' /* <--Enter your Scheme Code */
+
+/* this temporary path will be created as needed */
+g.tempPath         = 'RAM:BBSLINKWALL/' /* must end with a trailing slash */
+
+/* these swtiches (0=off, 1=on) control how the Wall functions */
+g.showStatus       = 1  /* Show http type status messages to the user */
+g.autoRetry        = 1  /* Auto-retry web request if it times out or returns
+                           a blank result. User may cancel the request by
+                           pressing the ESC key */
+g.logErrors        = 0  /* Show Errors to the SysOp's (account 1) screen.
+                           This is for debug purposes and should not be left
+                           on during normal operations */
+
+/* ok to change these messages as needed by your system */
+s.retrieving       = 'Retrieving Data'
+s.sending          = 'Sending Data'
+s.reqTimedOut      = 'Request timed out, please try again later.'
+s.cancelled        = 'Request Cancelled'
+s.escToCancel      = '(ESC to cancel)'
+s.anyKey           = 'Smash any key to continue..'
+
+/* End of SysOp Configurable Options **************************************/
+/**************************************************************************/
+
+if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
+
+changewhere "BBSLink Wall" 
+
+tr=transmit;se=sendstring;mg=maygetchar;gc=getchar;gu=getuser;cls='f1';esc="[";
+a="rexxsupport.library";if ~show("l",a) then if ~addlib(a,0,-30) then exit
+  
+gu 40;UDI = space(result ,0)
+
+g.logErrors = g.logErrors&UDI==1
+
+/* Show the wall! */
+call getwall(UDI)
+
+/* Ask user if they want to write to the wall themselves */
+prompt 5 NOYES "c6Write on the wall [y,N]? "
+
+/* If they answered no, quit. */
+if result=='No' | result=="###PANIC" then exit
+
+/* Find out if user already has a registered user name */
+tr "  Looking for your pen - it's around here somewhere..."
+  
+b.xkey=randomString()
+b.ktoken=GetToken(b.xkey,UDI)
+b.username=SendToServer("username",'',UDI)
+
+/* Check for username error and display as appropriate */
+if (substr(b.username, 1, 3) = "*xx") then do
+  tr "  Sorry, I looked everywhere. Can't find it. Oh, and this happened:  " || substr(b.username, 3)
+  tr "  "s.anyKey
+  tr
+  gc
+  exit
+end
+
+if (b.username = "*notexist") then do
+  /* Not registered */
+  se "  So you're new here! "
+  do forever
+    se "Choose a name (max 12 characters):"
+    receive
+    getnewusername=result
+    if checkabort=1 then exit
+    if result="###PANIC" then exit
+    if result="q" then exit
+    b.xkey=randomString()
+    b.ktoken=GetToken(b.xkey,UDI)
+    nuresult = SendToServer("newuser", getnewusername,UDI)
+    if (nuresult = "*created") then do
+      tr "  Welcome to the wall, " || getnewusername
+      leave
+    end 
+    else if (nuresult = "*inuse") then do 
+      tr "  That user name is already in use, choose another!"
+    end
+    else if (nuresult = "*inval") then do
+      tr "  That user name is invalid, choose another!"
+    end 
+  end
+  
+  /* Even if they didn't before, they should have a user name now. If they still
+   don't for some reason, show an error and quit. This will also catch
+   authentication errors. */
+
+  b.username = SendToServer("username",'',UDI)
+  if (substr(b.username, 1, 1) = '*') then do
+    tr "  Sorry, I can't find it :-(    (An error occurred [" || b.username || "])"
+    tr "  "s.anyKey
+    tr
+    gc
+    exit
+  end 
+end
+
+/* Get the user's thoughts - in 64 characters or less! */
+tr "  What's on your mind, " || b.username || "?  (max 64 characters)"
+se ":"
+
+/* Take the wall post */
+prompt 64 NORMAL ""
+getwallpost=result 
+if result="###PANIC" then exit
+if result=="q" | result=="Q" then exit
+
+/* If input is more than 2 characters, submit it */
+if length(getwallpost) > 2 then do
+  b.xkey=randomString()
+  b.ktoken=GetToken(b.xkey,UDI)
+  postresult = SendToServer("post", getwallpost,UDI)
+  /* Check result of post attempt */
+  if (postresult = "*post") then do 
+    /* Successful */
+    tr "  Post successful!"
+  end 
+  else if (postresult = "*int") then do
+    /* Last post < 10 minutes ago */
+    tr "  Sorry, you have to wait 10 minutes between posts. "s.anyKey
+    tr
+    gc
+    exit
+  end 
+  else if (postresult = "*inval") then do
+    /* Post contained > 64 characters */
+    tr "  Your post contained too many characters (max length 64 chars)."
+    tr "  "s.anyKey
+    tr
+    gc
+    exit
+  end
+  else do 
+    /* Post failed, unknown reason */
+    tr "post result: '" || postresult || "'"
+    tr "  Post failed :-( "s.anyKey
+    tr
+    gc
+    exit
+  end 
+end
+else do
+  tr "  Your post was too short! "s.anyKey
+  tr
+  gc
+  exit
+end
+
+/* Show the wall! */
+call getwall(UDI)
+
+tr
+tr s.anyKey
+tr
+gc
+exit
+
+/* Procedures *************************************************************/
+
+/* Delete the results file */
+deleteResultsFile: procedure expose tr g.
+  parse arg filename
+  
+  filePath= g.tempPath||filename
+  
+  if exists(filePath) then do
+    do delLoop = 1 to 3
+      if delete(filepath) then leave delLoop
+      call delay(50)
+    end
+    if g.logErrors & exists(filePath) then tr 'BBSLINKWALL: Unable to delete 'filePath' after 'delLoop' tries.'
+  end 
+return
+
+/* fetches web request 
+   @param uri       the url to retrieve
+   @param fileName  the filename where to store results
+   @param type      0=retrieve, 1=send
+   
+   returns results as an array called resultsArr structured as:
+     resultArr.0 = line count
+     resultArr.1 = line 1 string
+     resultArr.2 = line 2 string
+      .
+      .
+      .
+     resultArr.n = line n string  
+*/
+fetchWebRequest: procedure expose se tr mg esc s. g. resultArr.
+  parse arg uri, fileName, type 
+  
+  apirequest:
+  
+  /* clear any previous data in resultArr */
+  drop resultArr.
+  
+  /* init resultArr */
+  resultArr.0=0
+  resultArr.1=""
+  
+  /* make web request */
+  filePath=g.tempPath||fileName
+  httpcmd = 'run >nil: http_get "'uri'" >'filePath
+  address command httpcmd
+  
+  timeout=20
+  call time('r')
+  
+  /* show status message */
+  if g.showStatus then do
+    if type then reqType=s.sending
+    else reqType=s.retrieving
+    dotCount=0
+    se reqType
+  end
+  
+  bufferflush
+  do until time('e') > timeout + 1
+    mg
+    if result=="NOCHAR" then nop
+    else if C2D(result)==27 then do
+      /*  ESC key will exit */
+      resultArr.0 = 1
+      resultArr.1 = s.cancelled
+      leave /* cause loop to exit */
+    end
+    call check
+    call delay(25) /* 1/2 second */
+ 
+    /* check if results file is ready yet */
+    if exists(filePath) then do
+      if open(BLW, filePath, R) then do
+        /* read results file into resultsArr */
+        line=0
+        do while ~eof(BLW)
+          line=line+1
+          resultArr.line = readln(BLW)
+        end
+        /* place line count at resultArr.0 */
+        resultArr.0 = line
+        call close(BLW)
+        leave /* cause loop to exit */
+      end
+      else if g.logErrors then tr "BBSLINKWALL: "filePath" exists but could not open"
+    end
+    else if g.logErrors then tr "BBSLINKWALL: "filePath" does not exist, could not open"
+    
+    /* update status message */
+    if g.showStatus then do 
+      if dotCount==0 then se " "s.escToCancel
+      else se "."
+      dotCount = dotCount + 1
+    end    
+  end
+  bufferflush
+  
+  /* clear status message */
+  if g.showStatus then do
+    computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
+    se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
+  end
+  
+  /* check if request timed out */
+  if resultArr.0==0 then do
+    if g.autoRetry then signal apirequest
+    else do 
+      resultArr.0=1
+      reslutArr.1=s.reqTimedOut
+    end
+  end  
+return
+
+/* Show the wall! */
+getwall: procedure expose se tr mg cls esc s. g. resultArr.
+  parse arg lUDI
+  
+  filename= "user"lUDI
+  
+  /* Delete the last results file in case it wasn't deleted last time */
+  call deleteResultsFile(filename)
+
+  /* Fetch the wall from BBSLink */
+  rcd="http://games.bbslink.net/wall.php?action=show"
+  call fetchWebRequest(rcd, filename, 0)
+  
+  /* display wall */
+  if resultArr.0 > 0 then do
+    se cls 
+    do i=1 to resultArr.0
+      tr resultArr.i
+    end
+  end
+return
+
+/* Send data to the server */
+sendtoserver: procedure expose se tr mg cls esc b. s. g. resultArr.
+  parse arg val, val2, lUDI 
+  
+  filename= "user"lUDI
+  
+  /*  Assemble the Authentication Request URL */
+  xUser='user=' || lUDI 
+  xSystem='system=' || b.SystemCode
+  xAuth='auth=' || MD5(b.AuthorizationCode || b.ktoken)
+  xCode='scheme=' || MD5(b.SchemeCode || b.ktoken)
+  
+  xToken='token=' || b.ktoken
+  xType='type=amiga'
+  xVersion='version=1.0.0'
+  
+  tval=SPACE(val2,1,"+")
+  
+  and = '&'
+  rcd = 'http://games.bbslink.net/wall.php?action=' || val || and || 'key=' || b.xkey || and || xuser || and || xSystem || and || xAuth || and || xCode || and || xToken || and || xType || and || xVersion
+  if length(val2) > 0 then rcd=rcd || '&data=' || tval   
+
+  /* Delete the last results file in case it wasn't deleted last time */
+  call deleteResultsFile(filename)
+
+  /* Fetch the authorization request */
+  call fetchWebRequest(rcd, filename, 1)
+  
+  /* pull out results from resultArr */
+  body=''
+  if resultArr.0 > 0 then do
+    do i=1 to resultArr.0
+      body=resultArr.i
+    end
+  end
+  else if g.logErrors then tr 'BBSLINKWALL: Unable to display results. Web request likely failed.'
+
+  /* Delete the results file */
+  call deleteResultsFile(filename)
+
+return body
+
+/* Retrieve a token from the server */
+GetToken: procedure expose se tr mg esc s. g. resultArr.
+  parse arg k, lUDI
+
+  filename= "user"lUDI
+
+  /* Delete the last results file in case it wasn't deleted last time */
+  call deleteResultsFile(filename)
+
+  /* Fetch the token from BBSLink */
+  rcd='http://games.bbslink.net/token.php?key=' || k
+  call fetchWebRequest(rcd, filename, 0)
+
+  /* pull out token from resultArr */
+  b.ktoken=''
+  if resultArr.0 > 0 then do
+    do i=1 to resultArr.0
+      data= resultArr.i
+      if data ~= '' then b.ktoken=data
+    end
+  end
+  else do
+    tr 'Unable to open token file. Exiting.'
+    exit 
+  end  
+return b.ktoken
+
+/* This function makes a MD5 digest checksum from a given string */
+/*                                                               */
+/* ARexxMD5.rexx by AmigaPhil  Well, almost, as I wrote it from  */
+/*                             examples I found on Internet. :-) */
+/*                                                               */
+/* A big thanks to Bernd Gollesch (on AmigaWorld.net) for having */
+/* helped me to fix the script (signed integer issue) !!!        */
+/*                                                               */
+/* Do what you want with this script, but be warned that it can  */
+/* be very slow (especially with long strings) !  If you need a  */
+/* faster MD5 message digest algorithm, pick one of the binary   */
+/* executable available on Aminet (http://www.aminet.net).       */
+
+md5: procedure
+
+   parse arg stuff
+
+   numeric digits 11
+   lenstuff=length(stuff)
+
+   c0=myd2c(0)
+   c1=myd2c(128)
+   c1a=myd2c(255)
+   c1111=c1a||c1a||c1a||c1a
+   slen=length(stuff)*8
+   slen512=slen//512
+
+   /* pad message to multiple of 512 bits.  Last 2 words are 64 bit # bits in message*/
+   if slen512=448 then  addme=512
+   if slen512<448 then addme=448-slen512
+   if slen512>448 then addme=960-slen512
+   addwords=addme/8
+
+   apad=c1||copies(c0,addwords-1)
+
+   xlen=reverse(right(myd2c(lenstuff*8),4,c0))||c0||c0||c0||c0  /* 2**32 max bytes in message */
+
+   /* NEWSTUFF is the message to be md5'ed */
+   newstuff=stuff||apad||xlen
+
+   /* starting values of registers */
+   a ='67452301'x;
+   b ='efcdab89'x;
+   c ='98badcfe'x;
+   d ='10325476'x;
+
+   lennews=length(newstuff)/4
+
+   /* loop through entire message */
+   do i1 = 0 to ((lennews/16)-1)
+   i16=i1*64
+   do j=1 to 16
+       j4=((j-1)*4)+1
+       jj=i16+j4
+       m.j=reverse(substr(newstuff,jj,4))
+   end /* do */
+
+   /* transform this block of 16 chars to 4 values. Save prior values first */
+   aa=a;bb=b;cc=c;dd=d
+
+   /* do 4 rounds, 16 operations per round (rounds differ in bit'ing functions */
+   S11=7
+   S12=12
+   S13=17
+   S14=22
+   a=round1( a, b, c, d,   0 , S11, 3614090360); /* 1 */
+   d=round1( d, a, b, c,   1 , S12, 3905402710); /* 2 */
+   c=round1( c, d, a, b,   2 , S13,  606105819); /* 3 */
+   b=round1( b, c, d, a,   3 , S14, 3250441966); /* 4 */
+   a=round1( a, b, c, d,   4 , S11, 4118548399); /* 5 */
+   d=round1( d, a, b, c,   5 , S12, 1200080426); /* 6 */
+   c=round1( c, d, a, b,   6 , S13, 2821735955); /* 7 */
+   b=round1( b, c, d, a,   7 , S14, 4249261313); /* 8 */
+   a=round1( a, b, c, d,   8 , S11, 1770035416); /* 9 */
+   d=round1( d, a, b, c,   9 , S12, 2336552879); /* 10 */
+   c=round1( c, d, a, b,  10 , S13, 4294925233); /* 11 */
+   b=round1( b, c, d, a,  11 , S14, 2304563134); /* 12 */
+   a=round1( a, b, c, d,  12 , S11, 1804603682); /* 13 */
+   d=round1( d, a, b, c,  13 , S12, 4254626195); /* 14 */
+   c=round1( c, d, a, b,  14 , S13, 2792965006); /* 15 */
+   b=round1( b, c, d, a,  15 , S14, 1236535329); /* 16 */
+
+   /* Round 2 */
+   S21=5
+   S22=9
+   S23=14
+   S24=20
+   a= round2( a, b, c, d,   1 , S21, 4129170786); /* 17 */
+   d= round2( d, a, b, c,   6 , S22, 3225465664); /* 18 */
+   c=  round2( c, d, a, b,  11 , S23,  643717713); /* 19 */
+   b=  round2( b, c, d, a,   0 , S24, 3921069994); /* 20 */
+   a=  round2( a, b, c, d,   5 , S21, 3593408605); /* 21 */
+   d=  round2( d, a, b, c,  10 , S22,   38016083); /* 22 */
+   c=  round2( c, d, a, b,  15 , S23, 3634488961); /* 23 */
+   b= round2( b, c, d, a,   4 , S24, 3889429448); /* 24 */
+   a= round2( a, b, c, d,   9 , S21,  568446438); /* 25 */
+   d= round2( d, a, b, c,  14 , S22, 3275163606); /* 26 */
+   c=  round2( c, d, a, b,   3 , S23, 4107603335); /* 27 */
+   b=  round2( b, c, d, a,   8 , S24, 1163531501); /* 28 */
+   a=  round2( a, b, c, d,  13 , S21, 2850285829); /* 29 */
+   d=  round2( d, a, b, c,   2 , S22, 4243563512); /* 30 */
+   c=  round2( c, d, a, b,   7 , S23, 1735328473); /* 31 */
+   b= round2( b, c, d, a,  12 , S24, 2368359562); /* 32 */
+
+   /* Round 3 */
+   S31= 4
+   S32= 11
+   S33= 16
+   S34= 23
+   a= round3( a, b, c, d,   5 , S31, 4294588738); /* 33 */
+   d=  round3( d, a, b, c,   8 , S32, 2272392833); /* 34 */
+   c=  round3( c, d, a, b,  11 , S33, 1839030562); /* 35 */
+   b=  round3( b, c, d, a,  14 , S34, 4259657740); /* 36 */
+   a=  round3( a, b, c, d,   1 , S31, 2763975236); /* 37 */
+   d=  round3( d, a, b, c,   4 , S32, 1272893353); /* 38 */
+   c=  round3( c, d, a, b,   7 , S33, 4139469664); /* 39 */
+   b=  round3( b, c, d, a,  10 , S34, 3200236656); /* 40 */
+   a=  round3( a, b, c, d,  13 , S31,  681279174); /* 41 */
+   d=  round3( d, a, b, c,   0 , S32, 3936430074); /* 42 */
+   c=  round3( c, d, a, b,   3 , S33, 3572445317); /* 43 */
+   b=  round3( b, c, d, a,   6 , S34,   76029189); /* 44 */
+   a=  round3( a, b, c, d,   9 , S31, 3654602809); /* 45 */
+   d=  round3( d, a, b, c,  12 , S32, 3873151461); /* 46 */
+   c=  round3( c, d, a, b,  15 , S33,  530742520); /* 47 */
+   b=  round3( b, c, d, a,   2 , S34, 3299628645); /* 48 */
+
+   /* Round 4 */
+   S41=6
+   S42=10
+   S43=15
+   s44=21
+   a=round4( a, b, c, d,   0 , S41, 4096336452); /* 49 */
+   d=round4( d, a, b, c,   7 , S42, 1126891415); /* 50 */
+   c=round4( c, d, a, b,  14 , S43, 2878612391); /* 51 */
+   b=round4( b, c, d, a,   5 , s44, 4237533241); /* 52 */
+   a=round4( a, b, c, d,  12 , S41, 1700485571); /* 53 */
+   d=round4( d, a, b, c,   3 , S42, 2399980690); /* 54 */
+   c=round4( c, d, a, b,  10 , S43, 4293915773); /* 55 */
+   b=round4( b, c, d, a,   1 , s44,  2240044497); /* 56 */
+   a=round4( a, b, c, d,   8 , S41, 1873313359); /* 57 */
+   d=round4( d, a, b, c,  15 , S42, 4264355552); /* 58 */
+   c=round4( c, d, a, b,   6 , S43, 2734768916); /* 59 */
+   b=round4( b, c, d, a,  13 , s44, 1309151649); /* 60 */
+   a=round4( a, b, c, d,   4 , S41, 4149444226); /* 61 */
+   d=round4( d, a, b, c,  11 , S42, 3174756917); /* 62 */
+   c=round4( c, d, a, b,   2 , S43,  718787259); /* 63 */
+   b=round4( b, c, d, a,   9 , s44, 3951481745); /* 64 */
+
+
+   a=m32add(aa,a) ; b=m32add(bb,b) ; c=m32add(cc,c) ; d=m32add(dd,d)
+
+   end
+
+   aa=c2x(reverse(a))||c2x(reverse(b))||c2x(reverse(C))||c2x(reverse(D))
+
+
+
+   /*--- return MD5 ---------------------------------------------------------*/
+   return translate(aa,'abcdef','ABCDEF')
+
+/*===========================================================================*/
+round1: procedure expose m. c1111 c0
+/*===========================================================================*/
+   parse arg a1,b1,c1,d1,kth,shift,sini
+   kth=kth+1
+   t1=myc2d(a1)+myc2d(f(b1,c1,d1))+ myc2d(m.kth) + sini
+   t1a=right(myd2c(t1),4,c0)
+   t2=rotleft(t1a,shift)
+   t3=m32add(t2,b1)
+   return t3
+
+/*===========================================================================*/
+round2: procedure expose m. c1111 c0
+/*===========================================================================*/
+   parse arg a1,b1,c1,d1,kth,shift,sini
+   kth=kth+1
+   t1=myc2d(a1)+myc2d(g(b1,c1,d1))+ myc2d(m.kth) + sini
+   t1a=right(myd2c(t1),4,c0)
+   t2=rotleft(t1a,shift)
+   t3=m32add(t2,b1)
+   return t3
+
+/*===========================================================================*/
+round3: procedure expose m. c1111 c0
+/*===========================================================================*/
+   parse arg a1,b1,c1,d1,kth,shift,sini
+   kth=kth+1
+   t1=myc2d(a1)+myc2d(h(b1,c1,d1))+ myc2d(m.kth) + sini
+   t1a=right(myd2c(t1),4,c0)
+   t2=rotleft(t1a,shift)
+   t3=m32add(t2,b1)
+   return t3
+
+/*===========================================================================*/
+round4: procedure expose m. c1111 c0
+/*===========================================================================*/
+   parse arg a1,b1,c1,d1,kth,shift,sini
+   kth=kth+1
+   t1=myc2d(a1)+myc2d(i(b1,c1,d1))+ myc2d(m.kth) + sini
+   t1a=right(myd2c(t1),4,c0)
+   t2=rotleft(t1a,shift)
+   t3=m32add(t2,b1)
+   return t3
+
+/*===========================================================================*/
+m32add: procedure expose c0
+/* add to "char" numbers, modulo 2**32, return as char                       */
+/*===========================================================================*/
+   parse arg v1,v2
+   t1=myc2d(v1)+myc2d(v2)
+   t2=myd2c(t1)
+   t3=right(t2,4,c0)
+   return t3
+
+
+
+/*===========================================================================*/
+f: procedure expose c1111
+/* F(x, y, z) == (((x) & (y)) | ((~x) & (z)))                                */
+/*===========================================================================*/
+   parse arg x,y,z
+   t1=bitand(x,y)
+   notx=bitxor(x,c1111)
+   t2=bitand(notx,z)
+   return bitor(t1,t2)
+
+
+/*===========================================================================*/
+g: procedure expose c1111
+/* G(x, y, z) == (((x) & (z)) | ((y) & (~z)))*/
+/*===========================================================================*/
+   parse arg x,y,z
+   t1=bitand(x,z)
+   notz=bitxor(z,c1111)
+   t2=bitand(y,notz)
+   return bitor(t1,t2)
+
+/*===========================================================================*/
+h: procedure
+/* H(x, y, z) == ((x) ^ (y) ^ (z)) */
+/*===========================================================================*/
+   parse arg x,y,z
+   t1=bitxor(x,y)
+   return bitxor(t1,z)
+
+/*===========================================================================*/
+i: procedure expose c1111
+/* I(x, y, z) == ((y) ^ ((x) | (~z))) */
+/*===========================================================================*/
+   parse arg x,y,z
+   notz=bitxor(z,c1111)
+   t2=bitor(x,notz)
+   return bitxor(y,t2)
+
+/*===========================================================================*/
+rotleft: procedure
+/* bit rotate to the left by s positions                                     */
+/*===========================================================================*/
+   parse arg achar,s
+   if s=0 then return achar
+
+   bits=myx2b(c2x(achar))
+   lb=length(bits)
+   t1=left(bits,s)
+   t2=bits||t1
+   yib=right(t2,lb)
+   return x2c(myb2x(yib))
+
+/*===========================================================================*/
+myc2d: procedure expose c0
+/* c2d() replacement to "fix" signed integer                                 */
+/*===========================================================================*/
+parse arg val
+val = right(val, 4, c0)
+val_high = left(val, 2)
+val_low = right(val, 2)
+res = c2d(val_high)*65536 + c2d(val_low)
+return res
+
+/*===========================================================================*/
+myd2c: procedure expose c0
+/* d2c() replacement to "fix" signed integer                                 */
+/*===========================================================================*/
+parse arg val
+if val > 2147483647 then
+res = right(d2c(val%65536),2,c0) || right(d2c(val//65536),2,c0)
+else
+res=d2c(val)
+return res
+
+/*===========================================================================*/
+myx2b: procedure
+/* implement x2b() function if missing (like in ARexx, Rexx for Amiga)       */
+/*===========================================================================*/
+parse arg val
+parse version rexxver
+if left(rexxver,5) = 'ARexx' then return c2b(x2c(val))
+return x2b(val)
+
+/*===========================================================================*/
+myb2x: procedure
+/* implement b2x() function if missing (like in ARexx, Rexx for Amiga)       */
+/*===========================================================================*/
+parse arg val
+parse version rexxver
+if left(rexxver,5) = 'ARexx' then return c2x(b2c(val))
+return b2x(val)
+
+randomString: procedure
+  /* Generate a random key */
+  a=random(,,time("s"))
+  r1 = random(0,9)
+  r2 = random(0,9)
+  r3 = random(0,9)
+  r4 = random(0,9)
+  r5 = random(0,9)
+  r6 = random(0,9)
+
+  /* Assemble the Token Request URL */
+  tkey=r1 || r2 || r3 || r4 || r5 || r6
+return tkey
+  
+CHECK:
+  if ARG() & ARG(1)~="###PANIC" then return ARG(1)
+  getcarrier
+  if result="TRUE" then do
+    if ARG() then return ARG(1)
+    else return
+  end
+  logentry "Lost Carrier!!"
+  bufferflush
+  exit
+  
+SYNTAX:
+ERROR:
+IOERR:
+  e1="n1 Error: "rc" ("errortext(rc)")"
+  e2="  Line: "left(sigl,4)"File:"
+  c="`"fp", "ver"'"
+  e2=e2" "c
+  tr e1
+  tr e2
+  logentry e1
+  logentry e2
+  e=strip(translate(sourceline(sigl),"\{",""))
+  do while e~=""
+    e3="Source: "left(e,37)
+    tr e3
+    logentry e3
+    e=substr(e,38)
+    end
+  bufferflush
+  exit
+/**************************************************************************\
+\*************************** -X-caliber BBS telnet://bbs.aholix.net:6800 **/
