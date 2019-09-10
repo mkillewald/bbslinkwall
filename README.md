@@ -12,7 +12,8 @@ http://www.bbslink.net/sysop/wall.php
 
 Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019
   - Replaced httpj with http_get to resolve stability issues with the BBS locking up when posting.
-  - Resolved issue with token expiring before user typed in their wall post. 
+  - Resolved issue with token expiring before user typed in their wall post.
+  - Added showStatus, autoRetry, and logErrors as Sysop configurable switches
                                                                    
 Version 1.0.0 written by Link of CheckSum Acknowledged BBS on 3 Feb 2018
   - original version
