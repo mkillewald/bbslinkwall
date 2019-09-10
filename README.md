@@ -1,20 +1,29 @@
-# CNet BBSLink Wall 2.0.0   
+# C-Net BBSLink Wall 2.0.0   
 A C-Net Pfile used to seamlessly connect a C-Net Amiga BBS to the BBSLink.net networked Grafitti Wall. 
 http://www.bbslink.net/sysop/wall.php
 
 ![BBSLink.net Wall](http://games.bbslink.net/wall.php)
 
+
+
 **************************************************************************
-Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019                                           
+
+### Changelog
+
+Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019
+  - Replaced httpj with http_get to resolve stability issues with the BBS locking up when posting.
+  - Resolved issue with token expiring before user typed in their wall post.
+  - Added showStatus, autoRetry, and logErrors as Sysop configurable switches
                                                                    
 Version 1.0.0 written by Link of CheckSum Acknowledged BBS on 3 Feb 2018
+  - original version
                                                                    
 CheckSum Acknowledged BBS has sadly gone offline as of: 15 Jul 2019  :(                                
                                                                     
 Use at your own risk.                                              
 **************************************************************************
 
-Installation Instructions:
+### Installation Instructions:
 
 1.  Create a folder called 'BBSLink' in your PFiles: directory.
     Copy this file there.
@@ -31,8 +40,8 @@ Installation Instructions:
     Authorization Code, and Scheme Code. Copy and paste these values
     from that email into these fields in the bbslinkwall script:
 
-    b.SystemCode='yoursystemcode'
-    b.AuthorizationCode='yourauthcode'
+    b.SystemCode='yoursystemcode'   
+    b.AuthorizationCode='yourauthcode'   
     b.SchemeCode='yourschemecode'
     
 5.  Add a line to your SYSTEXT:sys.welcome file like this:
@@ -44,4 +53,4 @@ Installation Instructions:
 6.  That's it!
 
 **************************************************************************
-#### -X-caliber BBS telnet://bbs.aholix.net:6400
+### -X-caliber BBS telnet://bbs.aholix.net:6400
