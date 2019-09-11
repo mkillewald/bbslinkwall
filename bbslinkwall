@@ -1,13 +1,18 @@
-/*                CNet BBSLink Wall  Version 2.0.0                   */
+/*                CNet BBSLink Wall  Version 2.0.1                   */
 /*                                                                   */
 /*  Used to seamlessly connect a CNet Amiga BBS to the BBSLink.net   */
 /*  networked Grafitti Wall.                                         */
 /*                                                                   */
 /*  Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019    */
-/*                                     bbs.aholix.net:6800           */
+/*   - Replaced httpj with http_get to resolve stability issues with */
+/*     the BBS locking up when posting.                              */
+/*   - Resolved issue with token expiring before user typed in their */
+/*     wall post.                                                    */
+/*   - Added showStatus, autoRetry, and logErrors as Sysop           */
+/*     configurable switches                                         */
 /*                                                                   */
-/*  Version 1.0.0 written by Link of CheckSum Acknowledged BBS on    */
-/*  3 Feb 2018                                                       */
+/*  Version 1.0.0 by Link of CheckSum Acknowledged BBS on 3 Feb 2018 */
+/*   - Orignal version                                               */
 /*                                                                   */
 /*  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :( */
 /*                                                                   */
@@ -90,8 +95,9 @@ call getwall(UDI)
 prompt 5 NOYES "c6Write on the wall [y,N]? "
 
 /* If they answered no, quit. */
-if result=='No' | result=="###PANIC" then exit
-
+if result=='No' then exit
+else call check
+	
 /* Find out if user already has a registered user name */
 tr "  Looking for your pen - it's around here somewhere..."
   
@@ -102,22 +108,17 @@ b.username=SendToServer("username",'',UDI)
 /* Check for username error and display as appropriate */
 if (substr(b.username, 1, 3) = "*xx") then do
   tr "  Sorry, I looked everywhere. Can't find it. Oh, and this happened:  " || substr(b.username, 3)
-  tr "  "s.anyKey
-  tr
-  gc
-  exit
+  signal EXIT
 end
-
-if (b.username = "*notexist") then do
+else if (b.username = "*notexist") then do
   /* Not registered */
   se "  So you're new here! "
   do forever
     se "Choose a name (max 12 characters):"
     receive
     getnewusername=result
-    if checkabort=1 then exit
-    if result="###PANIC" then exit
-    if result="q" then exit
+    if upper(result)="Q" then exit
+    else call check
     b.xkey=randomString()
     b.ktoken=GetToken(b.xkey,UDI)
     nuresult = SendToServer("newuser", getnewusername,UDI)
@@ -140,10 +141,7 @@ if (b.username = "*notexist") then do
   b.username = SendToServer("username",'',UDI)
   if (substr(b.username, 1, 1) = '*') then do
     tr "  Sorry, I can't find it :-(    (An error occurred [" || b.username || "])"
-    tr "  "s.anyKey
-    tr
-    gc
-    exit
+    signal EXIT
   end 
 end
 
@@ -154,8 +152,8 @@ se ":"
 /* Take the wall post */
 prompt 64 NORMAL ""
 getwallpost=result 
-if result="###PANIC" then exit
-if result=="q" | result=="Q" then exit
+if upper(result)=="Q" then exit
+else call check
 
 /* If input is more than 2 characters, submit it */
 if length(getwallpost) > 2 then do
@@ -166,46 +164,33 @@ if length(getwallpost) > 2 then do
   if (postresult = "*post") then do 
     /* Successful */
     tr "  Post successful!"
+    /* Show the wall! */   
+    call getwall(UDI)      
+    tr                                 
   end 
   else if (postresult = "*int") then do
     /* Last post < 10 minutes ago */
-    tr "  Sorry, you have to wait 10 minutes between posts. "s.anyKey
-    tr
-    gc
-    exit
+    se "  Sorry, you have to wait 10 minutes between posts. "
   end 
   else if (postresult = "*inval") then do
     /* Post contained > 64 characters */
-    tr "  Your post contained too many characters (max length 64 chars)."
-    tr "  "s.anyKey
-    tr
-    gc
-    exit
+    se "  Your post contained too many characters (max length 64 chars)."
   end
   else do 
     /* Post failed, unknown reason */
     tr "post result: '" || postresult || "'"
-    tr "  Post failed :-( "s.anyKey
-    tr
-    gc
-    exit
+    se "  Post failed :-( "
   end 
 end
 else do
-  tr "  Your post was too short! "s.anyKey
-  tr
-  gc
-  exit
+  se "  Your post was too short! "
 end
 
-/* Show the wall! */
-call getwall(UDI)
-
-tr
-tr s.anyKey
-tr
-gc
-exit
+EXIT:
+	tr s.anyKey 
+	tr
+	gc
+	exit
 
 /* Procedures *************************************************************/
 
@@ -241,84 +226,87 @@ return
 fetchWebRequest: procedure expose se tr mg esc s. g. resultArr.
   parse arg uri, fileName, type 
   
-  apirequest:
-  
-  /* clear any previous data in resultArr */
-  drop resultArr.
-  
-  /* init resultArr */
-  resultArr.0=0
-  resultArr.1=""
-  
-  /* make web request */
-  filePath=g.tempPath||fileName
-  httpcmd = 'run >nil: http_get "'uri'" >'filePath
-  address command httpcmd
-  
-  timeout=20
-  call time('r')
-  
-  /* show status message */
-  if g.showStatus then do
-    if type then reqType=s.sending
-    else reqType=s.retrieving
-    dotCount=0
-    se reqType
-  end
-  
-  bufferflush
-  do until time('e') > timeout + 1
-    mg
-    if result=="NOCHAR" then nop
-    else if C2D(result)==27 then do
-      /*  ESC key will exit */
-      resultArr.0 = 1
-      resultArr.1 = s.cancelled
-      leave /* cause loop to exit */
-    end
-    call check
-    call delay(25) /* 1/2 second */
- 
-    /* check if results file is ready yet */
-    if exists(filePath) then do
-      if open(BLW, filePath, R) then do
-        /* read results file into resultsArr */
-        line=0
-        do while ~eof(BLW)
-          line=line+1
-          resultArr.line = readln(BLW)
-        end
-        /* place line count at resultArr.0 */
-        resultArr.0 = line
-        call close(BLW)
-        leave /* cause loop to exit */
-      end
-      else if g.logErrors then tr "BBSLINKWALL: "filePath" exists but could not open"
-    end
-    else if g.logErrors then tr "BBSLINKWALL: "filePath" does not exist, could not open"
-    
-    /* update status message */
-    if g.showStatus then do 
-      if dotCount==0 then se " "s.escToCancel
-      else se "."
-      dotCount = dotCount + 1
-    end    
-  end
-  bufferflush
-  
-  /* clear status message */
-  if g.showStatus then do
-    computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
-    se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
-  end
+  /* run through outer loop at least once, repeat the loop if g.autoRetry is 
+     enabled and line count in resultArr.0 == 0 */
+     
+  do until ~g.autoRetry | resultArr.0>0 
+	  /* clear any previous data in resultArr */
+	  drop resultArr.
+	  
+	  /* init resultArr */
+	  resultArr.0=0
+	  resultArr.1=""
+	  
+	  /* make web request */
+	  filePath=g.tempPath||fileName
+	  httpcmd = 'run >nil: http_get "'uri'" >'filePath
+	  address command httpcmd
+	  
+	  timeout=20
+	  call time('r')
+	  
+	  /* show status message */
+	  if g.showStatus then do
+	    if type then reqType=s.sending
+	    else reqType=s.retrieving
+	    dotCount=0
+	    se reqType
+	  end
+	  
+	  /* inner loop checks if the results file is ready and exits if the 
+	     file is ready or the timeout period has been reached */
+	    
+	  bufferflush   
+	  do until time('e') > timeout + 1
+	    mg
+	    if result=="NOCHAR" then nop
+	    else if C2D(result)==27 then do
+	      /* ESC key will exit */
+	      resultArr.0 = 1
+	      resultArr.1 = s.cancelled
+	      leave /* cause loop to exit */
+	    end
+	    call check
+	    call delay(25) /* 1/2 second */
+	 
+	    /* check if results file is ready yet */
+	    if exists(filePath) then do
+	      if open(BLW, filePath, R) then do
+	        /* read results file into resultsArr */
+	        line=0
+	        do while ~eof(BLW)
+	          line=line+1
+	          resultArr.line = readln(BLW)
+	        end
+	        /* place line count at resultArr.0 */
+	        resultArr.0 = line
+	        call close(BLW)
+	        leave /* cause loop to exit */
+	      end
+	      else if g.logErrors then tr "BBSLINKWALL: "filePath" exists but could not open"
+	    end
+	    else if g.logErrors then tr "BBSLINKWALL: "filePath" does not exist, could not open"
+	    
+	    /* update status message */
+	    if g.showStatus then do 
+	      if dotCount==0 then se " "s.escToCancel
+	      else se "."
+	      dotCount = dotCount + 1
+	    end    
+	  end
+	  bufferflush
+	  
+	  /* clear status message */
+	  if g.showStatus then do
+	    computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
+	    se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
+	  end
+	end
   
   /* check if request timed out */
   if resultArr.0==0 then do
-    if g.autoRetry then signal apirequest
-    else do 
-      resultArr.0=1
-      reslutArr.1=s.reqTimedOut
-    end
+    resultArr.0=1
+    reslutArr.1=s.reqTimedOut
   end  
 return
 

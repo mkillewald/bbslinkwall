@@ -9,17 +9,17 @@ Architecture: generic
 Distribution: Aminet
 
                CNet BBSLink Wall  Version 2.0.0
-  Used to seamlessly connect a CNet Amiga BBS to the BBSLink.net 
+  Used to seamlessly connect a CNet Amiga BBS to the BBSLink.net
   networked Grafitti Wall. Version 2.0.0 aims to resolve stability
   and posting issues that existed in the old version. It is public
   domain software.
                
-  Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019                                           
+  Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019
   Version 1.0.0 by Link of CheckSum Acknowledged BBS on 3 Feb 2018
-  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :(                                                                           
+  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :(
 	
   An Arexx script that allows a CNet Sysop to add the BBSLink.Net
-  Wall to the system.  This allows users to view and write on the 
+  Wall to the system.  This allows users to view and write on the
   wall that is ran at BBSLink.net.
 	
 *****************************************************************
