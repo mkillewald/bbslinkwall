@@ -1,52 +1,62 @@
-/*                CNet BBSLink Wall  Version 2.0.1                   */
-/*                                                                   */
-/*  Used to seamlessly connect a CNet Amiga BBS to the BBSLink.net   */
-/*  networked Grafitti Wall.                                         */
-/*                                                                   */
-/*  Version 2.0.0 by k1ds3ns4t10n of -X-caliber BBS on 4 Sep 2019    */
-/*   - Replaced httpj with http_get to resolve stability issues with */
-/*     the BBS locking up when posting.                              */
-/*   - Resolved issue with token expiring before user typed in their */
-/*     wall post.                                                    */
-/*   - Added showStatus, autoRetry, and logErrors as Sysop           */
-/*     configurable switches                                         */
-/*                                                                   */
-/*  Version 1.0.0 by Link of CheckSum Acknowledged BBS on 3 Feb 2018 */
-/*   - Orignal version                                               */
-/*                                                                   */
-/*  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :( */
-/*                                                                   */
-/*  Use at your own risk.                                            */
-/*********************************************************************/
+/**************************************************************************\
+$VER: BBSLinkWall, v2.0.1 (Sep-11-2019) by k1ds3ns4t10n of -X-caliber BBS
+\**************************************************************************/
 options results;signal on SYNTAX;signal on ERROR;signal on IOERR
-PARSE ARG Arguments
-
-/*  Installation Instructions:
-
-1.  Create a folder called 'BBSLink' in your PFiles: directory.   
-    Copy this file there.
-    
-2.  Download http_get from Aminet and install in C:
-    https://aminet.net/package/comm/tcp/http_get
-
-3.  Register on bbslink.net as a sysop.  If you have already done 
-    so when you registered for the door game server, you will need
-    to use the information you got from that time you registered.
-
-4.  You will receive an email from them with your System Code,
-    Authorization Code, and Scheme Code. Copy and paste these values 
-    from that email down below where indicated in SysOp Configuralble
-    Options.
-    
-5.  Add a line to your SYSTEXT:sys.welcome file like this:
-    
-    Q#0 pfiles:bbslink/bbslinkwall}
-
-    ^ NOTE: "Q" here is a ctrl-Q
-     
-6.  That's it!  
-
-***************************************************************************/
+a=sourceline(2);parse var a . " " title ", " ver " (" vdate ") by " author " " .
+tr=transmit;se=sendstring;gc=getchar;gu=getuser;gs=getscratch;mg=maygetchar
+bbsidentify bbs;cv=left(word(result,3),4);cnet4=(datatype(cv,"n")=1&cv>"4.25")
+rs="rexxsupport.library";if ~show("l",rs) then if ~addlib(rs,0,-30) then exit
+parse source . . fp .; df=left(fp,max(lastpos('/',fp),lastpos(':',fp))) 
+changewhere "BBSLink Wall";cls='f1';esc="[";
+/**************************************************************************/
+/*                                                                        */
+/*  C-Net BBSLink Wall                           -X-caliber BBS           */
+/*    Used to seamlessly connect a C-Net            bbs.aholix.net:6800   */
+/*    Amiga BBS to the BBSLink.net                                        */
+/*    networked Grafitti Wall.                                            */
+/*                                                                        */
+/*  Changelog:                                                            */
+/*    v2.0.0 (4 Sep 2019) by k1ds3ns4t10n of -X-caliber BBS               */
+/*     - Replaced httpj with http_get to resolve stability issues with    */
+/*       the BBS locking up when posting.                                 */
+/*     - Resolved issue with token expiring before user typed in their    */
+/*       wall post.                                                       */
+/*     - Added showStatus, autoRetry, and logErrors as Sysop              */
+/*       configurable switches                                            */
+/*                                                                        */
+/*    v1.0.0 (3 Feb 2018) by Link of CheckSum Acknowledged BBS            */
+/*     - Orignal version                                                  */
+/*                                                                        */
+/*  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :(      */
+/*                                                                        */
+/*  Use at your own risk.                                                 */
+/*                                                                        */
+/*  INSTALATION INSTRUCTIONS:                                             */
+/*                                                                        */
+/*  1) Create a folder called 'BBSLink' in your PFiles: directory.        */
+/*     Copy this file there.                                              */
+/*                                                                        */
+/*  2) Download http_get from Aminet and install in C:                    */
+/*     https://aminet.net/package/comm/tcp/http_get                       */
+/*                                                                        */
+/*  3) Register on bbslink.net as a sysop.  If you have already done      */
+/*     so when you registered for the door game server, you will need     */
+/*     to use the information you got from that time you registered.      */
+/*                                                                        */
+/*  4) You will receive an email from them with your System Code,         */
+/*     Authorization Code, and Scheme Code. Copy and paste these values   */
+/*     from that email down below where indicated in SysOp Configuralble  */
+/*     Options.                                                           */
+/*                                                                        */
+/*  5) Add a line to your SYSTEXT:sys.welcome file like this:             */
+/*                                                                        */
+/*     Q#0 pfiles:bbslink/bbslinkwall}                                    */
+/*                                                                        */
+/*     ^ NOTE: "Q" here is a ctrl-Q                                       */
+/*                                                                        */
+/*  6) That's it!                                                         */
+/*                                                                        */
+/**************************************************************************/
 /* SysOp Configurable Options *********************************************/
 
 /* Enter information from the email you received here */ 
@@ -78,11 +88,6 @@ s.anyKey           = 'Smash any key to continue..'
 /**************************************************************************/
 
 if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
-
-changewhere "BBSLink Wall" 
-
-tr=transmit;se=sendstring;mg=maygetchar;gc=getchar;gu=getuser;cls='f1';esc="[";
-a="rexxsupport.library";if ~show("l",a) then if ~addlib(a,0,-30) then exit
   
 gu 40;UDI = space(result ,0)
 
@@ -97,7 +102,7 @@ prompt 5 NOYES "c6Write on the wall [y,N]? "
 /* If they answered no, quit. */
 if result=='No' then exit
 else call check
-	
+  
 /* Find out if user already has a registered user name */
 tr "  Looking for your pen - it's around here somewhere..."
   
@@ -187,10 +192,10 @@ else do
 end
 
 EXIT:
-	tr s.anyKey 
-	tr
-	gc
-	exit
+  tr s.anyKey 
+  tr
+  gc
+  exit
 
 /* Procedures *************************************************************/
 
@@ -230,78 +235,81 @@ fetchWebRequest: procedure expose se tr mg esc s. g. resultArr.
      enabled and line count in resultArr.0 == 0 */
      
   do until ~g.autoRetry | resultArr.0>0 
-	  /* clear any previous data in resultArr */
-	  drop resultArr.
-	  
-	  /* init resultArr */
-	  resultArr.0=0
-	  resultArr.1=""
-	  
-	  /* make web request */
-	  filePath=g.tempPath||fileName
-	  httpcmd = 'run >nil: http_get "'uri'" >'filePath
-	  address command httpcmd
-	  
-	  timeout=20
-	  call time('r')
-	  
-	  /* show status message */
-	  if g.showStatus then do
-	    if type then reqType=s.sending
-	    else reqType=s.retrieving
-	    dotCount=0
-	    se reqType
-	  end
-	  
-	  /* inner loop checks if the results file is ready and exits if the 
-	     file is ready or the timeout period has been reached */
-	    
-	  bufferflush   
-	  do until time('e') > timeout + 1
-	    mg
-	    if result=="NOCHAR" then nop
-	    else if C2D(result)==27 then do
-	      /* ESC key will exit */
-	      resultArr.0 = 1
-	      resultArr.1 = s.cancelled
-	      leave /* cause loop to exit */
-	    end
-	    call check
-	    call delay(25) /* 1/2 second */
-	 
-	    /* check if results file is ready yet */
-	    if exists(filePath) then do
-	      if open(BLW, filePath, R) then do
-	        /* read results file into resultsArr */
-	        line=0
-	        do while ~eof(BLW)
-	          line=line+1
-	          resultArr.line = readln(BLW)
-	        end
-	        /* place line count at resultArr.0 */
-	        resultArr.0 = line
-	        call close(BLW)
-	        leave /* cause loop to exit */
-	      end
-	      else if g.logErrors then tr "BBSLINKWALL: "filePath" exists but could not open"
-	    end
-	    else if g.logErrors then tr "BBSLINKWALL: "filePath" does not exist, could not open"
-	    
-	    /* update status message */
-	    if g.showStatus then do 
-	      if dotCount==0 then se " "s.escToCancel
-	      else se "."
-	      dotCount = dotCount + 1
-	    end    
-	  end
-	  bufferflush
-	  
-	  /* clear status message */
-	  if g.showStatus then do
-	    computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
-	    se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
-	  end
-	end
+    /* clear any previous data in resultArr */
+    drop resultArr.
+    
+    /* init resultArr */
+    resultArr.0=0
+    resultArr.1=""
+    
+    /* make web request */
+    filePath=g.tempPath||fileName
+    
+    userAgent= "http_get/1.0 (AmigaOS 3.1; Amiga; 68040; ks:40.68; wb:40.42) CNet/5 BBSLinkWall/"strip(ver,'L','v')" bbs.aholix.net:6800"
+    httpcmd = 'run >nil: http_get "'uri'" >'filePath
+    address command httpcmd
+    
+    timeout=20
+    call time('r')
+    
+    /* show status message */
+    if g.showStatus then do
+      if type then reqType=s.sending
+      else reqType=s.retrieving
+      dotCount=0
+      se reqType
+    end
+    
+    /* inner loop checks if the results file is ready and exits if the 
+       file is ready or the timeout period has been reached */
+      
+    bufferflush   
+    do until time('e') > timeout + 1
+      mg
+      if result=="NOCHAR" then nop
+      else if C2D(result)==27 then do
+        /* ESC key will exit */
+        resultArr.0 = 1
+        resultArr.1 = s.cancelled
+        leave /* cause loop to exit */
+      end
+      else call check
+      
+      call delay(25) /* 1/2 second */
+   
+      /* check if results file is ready yet */
+      if exists(filePath) then do
+        if open(BLW, filePath, R) then do
+          /* read results file into resultsArr */
+          line=0
+          do while ~eof(BLW)
+            line=line+1
+            resultArr.line = readln(BLW)
+          end
+          /* place line count at resultArr.0 */
+          resultArr.0 = line
+          call close(BLW)
+          leave /* cause loop to exit */
+        end
+        else if g.logErrors then tr "BBSLINKWALL: "filePath" exists but could not open"
+      end
+      else if g.logErrors then tr "BBSLINKWALL: "filePath" does not exist, could not open"
+      
+      /* update status message */
+      if g.showStatus then do 
+        if dotCount==0 then se " "s.escToCancel
+        else se "."
+        dotCount = dotCount + 1
+      end    
+    end
+    bufferflush
+    
+    /* clear status message */
+    if g.showStatus then do
+      computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
+      se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
+    end
+  end
   
   /* check if request timed out */
   if resultArr.0==0 then do
@@ -722,6 +730,8 @@ randomString: procedure
   /* Assemble the Token Request URL */
   tkey=r1 || r2 || r3 || r4 || r5 || r6
 return tkey
+
+/**************************************************************************/
   
 CHECK:
   if ARG() & ARG(1)~="###PANIC" then return ARG(1)
