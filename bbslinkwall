@@ -357,7 +357,7 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   xCode   ='&scheme='MD5(b.SchemeCode || b.ktoken)
   xToken  ='&token='b.ktoken
   xType   ='&type=amiga'
-  xVersion='&version=1.0.0'
+  xVersion='&version=2.0.1'
   
   /* URL encode the user input string */
   call urlEncode(data)  
