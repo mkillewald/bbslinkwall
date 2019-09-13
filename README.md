@@ -1,4 +1,4 @@
-#### NOTE: This is an unstable development build which has not yet been released, and is not guaranteed to work, use at your own risk. 
+#### NOTE: This is an unstable development build which has not yet been released, and is not guaranteed to work, do not use.  
 
 For the most stable release verision, see: [Latest release](https://github.com/mkillewald/bbslinkwall/releases/latest)
 
