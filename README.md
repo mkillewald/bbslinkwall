@@ -1,4 +1,10 @@
-# C-Net BBSLink Wall 2.0.1   
+NOTE: This is an unstable development build which has not yet been released, and is not guaranteed to work, use at your own risk. 
+
+For the most stable release verision, see: [Latest release](https://github.com/mkillewald/bbslinkwall/releases/latest)
+
+# C-Net BBSLink Wall 2.0.1 (devel version)
+
+
 A C-Net Pfile used to seamlessly connect a C-Net Amiga BBS to the BBSLink.net networked Grafitti Wall. 
 http://www.bbslink.net/sysop/wall.php
 
