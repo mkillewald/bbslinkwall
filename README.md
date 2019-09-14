@@ -1,4 +1,4 @@
-### NOTE: This is an unstable development version which has not yet been released, and is not guaranteed to work. Do not use this version, you have been warned. 
+### NOTE: This is an unstable development branch which has not yet been released, and is not guaranteed to work. Do not use this version, you have been warned. 
 
 ### For the stable release verision, return to branch [master](https://github.com/mkillewald/bbslinkwall/tree/master), or download the [latest release](https://github.com/mkillewald/bbslinkwall/releases/latest)
 
