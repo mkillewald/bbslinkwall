@@ -204,7 +204,7 @@ EXIT:
 /* Procedures *************************************************************/
 
 /* Delete the results file */
-deleteResultsFile: procedure expose tr g.
+deleteFile: procedure expose tr g.
   parse arg filename
   
   filePath= g.tempPath||filename
@@ -235,6 +235,9 @@ return
 fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
   parse arg uri, fileName, type 
   
+  filePath=g.tempPath||fileName
+  userAgent= "http_get/1.0 (AmigaOS 3.1; Amiga; 680x0; ks:40.68; wb:40.42) CNet/5 BBSLinkWall/"strip(ver,'L','v')" ("g.bbsName")"
+  
   /* run through outer loop at least once, repeat the loop if g.autoRetry is 
      enabled and line count in resultArr.0 == 0 */
      
@@ -247,8 +250,6 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
     resultArr.1=""
     
     /* make web request */
-    filePath=g.tempPath||fileName
-    userAgent= "http_get/1.0 (AmigaOS 3.1; Amiga; 680x0; ks:40.68; wb:40.42) CNet/5 BBSLinkWall/"strip(ver,'L','v')" ("g.bbsName")"
     httpcmd = 'run >nil: http_get "'uri'" >'filePath
     address command httpcmd
     
@@ -327,7 +328,7 @@ getWall: procedure expose se tr mg esc ver s. g. resultArr.
   filename= "user"g.uid
   
   /* Delete the last results file in case it wasn't deleted last time */
-  call deleteResultsFile(filename)
+  call deleteFile(filename)
 
   /* Fetch the wall from BBSLink */
   rcd="http://games.bbslink.net/wall.php?action=show"
@@ -370,7 +371,7 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   if action=="post" then exit 
 
   /* Delete the last results file in case it wasn't deleted last time */
-  call deleteResultsFile(filename)
+  call deleteFile(filename)
 
   /* Fetch the authorization request */
   call fetchWebRequest(rcd, filename, 1)
@@ -385,7 +386,7 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   else if g.logErrors then tr 'BBSLINKWALL: Unable to display results. Web request likely failed.'
 
   /* Delete the results file */
-  call deleteResultsFile(filename)
+  call deleteFile(filename)
 return body
 
 /* Retrieve a token from the server */
@@ -395,7 +396,7 @@ getToken: procedure expose se tr mg esc ver s. g. resultArr.
   filename= "user"g.uid
 
   /* Delete the last results file in case it wasn't deleted last time */
-  call deleteResultsFile(filename)
+  call deleteFile(filename)
 
   /* Fetch the token from BBSLink */
   rcd='http://games.bbslink.net/token.php?key='key
@@ -531,7 +532,6 @@ getUrlEncodeTable:
   urlEncode.in.55="7f"x; urlEncode.out.55="%7F" /* Delete                     */
   
   urlEncode.max=55  
-  
 return
 
 
