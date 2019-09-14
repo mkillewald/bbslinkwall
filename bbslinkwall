@@ -18,7 +18,9 @@ changewhere "BBSLink Wall"
 /*                                                                        */
 /*  Changelog:                                                            */
 /*    v2.0.1 (          ) by k1ds3ns4t10n of -X-caliber BBS               */
-/*      -                                                                 */
+/*      - code cleanup and refactor                                       */
+/*      - renamed g.logErrors switch to g.debug                           */
+/*      - added URL encoding                                              */
 /*                                                                        */
 /*    v2.0.0 (4 Sep 2019) by k1ds3ns4t10n of -X-caliber BBS               */
 /*     - Replaced httpj with http_get to resolve stability issues with    */
@@ -68,7 +70,7 @@ b.SystemCode       ='yourcodehere' /* <--Enter your System Code */
 b.AuthorizationCode='yourcodehere' /* <--Enter your Authorization Code */
 b.SchemeCode       ='yourcodehere' /* <--Enter your Scheme Code */
 
-/* this temporary path will be created as needed */
+/* this path will be created as needed */
 g.tempPath         = 'RAM:BBSLINKWALL/' /* must end with a trailing slash */
 
 /* these swtiches (0=off, 1=on) control how the Wall functions */
@@ -76,11 +78,14 @@ g.showStatus       = 1  /* Show http type status messages to the user */
 g.autoRetry        = 1  /* Auto-retry web request if it times out or returns
                            a blank result. User may cancel the request by
                            pressing the ESC key */
-g.logErrors        = 0  /* Show Errors to the SysOp's (account 1) screen.
+g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
                            This is for debug purposes and should not be left
                            on during normal operations */
 
-/* ok to change these messages as needed by your system */
+/* ok to change these as needed for your system */                          
+g.timeout          = 20 /* API http request timeout in seconds
+
+/* ok to change these messages, but do not add ANSI or MCI codes. */
 s.retrieving       = 'Retrieving Data'
 s.sending          = 'Sending Data'
 s.reqTimedOut      = 'Request timed out, please try again later.'
@@ -95,7 +100,7 @@ if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
   
 gu 40;g.uid = space(result ,0)
 
-g.logErrors = g.logErrors&g.uid==1
+g.debug = g.debug&g.uid==1
 
 /* Show the wall! */
 call getWall
@@ -116,7 +121,7 @@ b.username=sendToServer("username",'')
 
 /* Check for username error and display as appropriate */
 if (substr(b.username, 1, 3) = "*xx") then do
-  tr "  Sorry, I looked everywhere. Can't find it. Oh, and this happened:  " || substr(b.username, 3)
+  tr "  Sorry, I looked everywhere. Can't find it. Oh, and this happened:  "substr(b.username, 3)
   signal EXIT
 end
 else if (b.username = "*notexist") then do
@@ -149,13 +154,13 @@ else if (b.username = "*notexist") then do
 
   b.username = sendToServer("username",'')
   if (substr(b.username, 1, 1) = '*') then do
-    tr "  Sorry, I can't find it :-(    (An error occurred [" || b.username || "])"
+    tr "  Sorry, I can't find it :-(    (An error occurred ["b.username"])"
     signal EXIT
   end 
 end
 
 /* Get the user's thoughts - in 64 characters or less! */
-tr "  What's on your mind, " || b.username || "?  (max 64 characters)"
+tr "  What's on your mind, "b.username"?  (max 64 characters)"
 se ":"
 
 /* Take the wall post */
@@ -187,7 +192,7 @@ if length(newPost) > 2 then do
   end
   else do 
     /* Post failed, unknown reason */
-    tr "post result: '" || postresult || "'"
+    tr "post result: "postresult"
     se "  Post failed :-( "
   end 
 end
@@ -212,9 +217,9 @@ deleteFile: procedure expose tr g.
   if exists(filePath) then do
     do delLoop = 1 to 3
       if delete(filepath) then leave delLoop
-      call delay(50)
+      call delay(25)
     end
-    if g.logErrors & exists(filePath) then tr 'BBSLINKWALL: Unable to delete 'filePath' after 'delLoop' tries.'
+    if g.debug & exists(filePath) then tr 'BBSLINKWALL: Unable to delete 'filePath' after 'delLoop' tries.'
   end 
 return
 
@@ -253,7 +258,6 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
     httpcmd = 'run >nil: http_get "'uri'" >'filePath
     address command httpcmd
     
-    timeout=20
     call time('r')
     
     /* show status message */
@@ -268,7 +272,7 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
        file is ready or the timeout period has been reached */
       
     bufferflush   
-    do until time('e') > timeout + 1
+    do until time('e') > g.timeout + 1
       mg
       if result=="NOCHAR" then nop
       else if C2D(result)==27 then do
@@ -295,9 +299,9 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
           call close(BLW)
           leave /* cause loop to exit */
         end
-        else if g.logErrors then tr "BBSLINKWALL: "filePath" exists but could not open"
+        else if g.debug then tr "BBSLINKWALL: "filePath" exists but could not open"
       end
-      else if g.logErrors then tr "BBSLINKWALL: "filePath" does not exist, could not open"
+      else if g.debug then tr "BBSLINKWALL: "filePath" does not exist, could not open"
       
       /* update status message */
       if g.showStatus then do 
@@ -341,6 +345,9 @@ getWall: procedure expose se tr mg esc ver s. g. resultArr.
       tr resultArr.i
     end
   end
+  
+  /* Delete the results file */
+  call deleteFile(filename)
 return
 
 /* Send data to the server */
@@ -383,8 +390,8 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
       body=resultArr.i
     end
   end
-  else if g.logErrors then tr 'BBSLINKWALL: Unable to display results. Web request likely failed.'
-
+  else if g.debug then tr 'BBSLINKWALL: Unable to display results. Web request likely failed.'
+    
   /* Delete the results file */
   call deleteFile(filename)
 return body
@@ -401,7 +408,7 @@ getToken: procedure expose se tr mg esc ver s. g. resultArr.
   /* Fetch the token from BBSLink */
   rcd='http://games.bbslink.net/token.php?key='key
   call fetchWebRequest(rcd, filename, 0)
-
+  
   /* pull out token from resultArr */
   b.ktoken=''
   if resultArr.0 > 0 then do
@@ -413,7 +420,10 @@ getToken: procedure expose se tr mg esc ver s. g. resultArr.
   else do
     tr 'Unable to open token file. Exiting.'
     exit 
-  end  
+  end
+  
+  /* Delete the results file */
+  call deleteFile(filename)
 return b.ktoken
 
 /* replace - replace srch text with repl text in text 
