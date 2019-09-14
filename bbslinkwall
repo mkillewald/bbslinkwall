@@ -83,7 +83,7 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
                            on during normal operations */
 
 /* ok to change these as needed for your system */                          
-g.timeout          = 20 /* API http request timeout in seconds
+g.timeout          = 20 /* API http request timeout in seconds */
 
 /* ok to change these messages, but do not add ANSI or MCI codes. */
 s.retrieving       = 'Retrieving Data'
@@ -169,6 +169,8 @@ newPost=result
 if upper(result)=="Q" then exit
 else call check
 
+se esc"0;36"
+
 /* If input is more than 2 characters, submit it */
 if length(newPost) > 2 then do
   b.key=randomString()
@@ -192,7 +194,7 @@ if length(newPost) > 2 then do
   end
   else do 
     /* Post failed, unknown reason */
-    tr "post result: "postresult"
+    tr "post result: "postresult
     se "  Post failed :-( "
   end 
 end
@@ -201,9 +203,9 @@ else do
 end
 
 EXIT:
-  tr s.anyKey 
-  tr
+  se s.anyKey 
   gc
+  tr
   exit
 
 /* Procedures *************************************************************/
@@ -327,8 +329,7 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
 return
 
 /* Show the wall! */
-getWall: procedure expose se tr mg esc ver s. g. resultArr.
-  
+getWall: procedure expose se tr mg esc ver s. g. resultArr. 
   filename= "user"g.uid
   
   /* Delete the last results file in case it wasn't deleted last time */
