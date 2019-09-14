@@ -1,4 +1,4 @@
-### NOTE: This is an unstable development version which has not yet been released, and is not guaranteed to work, do not use.  
+### NOTE: This is an unstable development version which has not yet been released, and is not guaranteed to work, DO NOT USE.  
 #### For the stable release verision, return to branch [master](https://github.com/mkillewald/bbslinkwall/tree/master), or download the [latest release](https://github.com/mkillewald/bbslinkwall/releases/latest)
 
 # C-Net BBSLink Wall 2.0.1 (devel version)
