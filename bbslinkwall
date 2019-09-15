@@ -262,7 +262,7 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
     resultArr.1=""
     
     /* make web request */
-    httpcmd = 'run >nil: http_get "'uri'" >'filePath
+    httpcmd = 'run >nil: http_get -u "'userAgent'" "'uri'" >'filePath
     address command httpcmd
     
     call time('r')
