@@ -7,7 +7,7 @@ tr=transmit;se=sendstring;gc=getchar;gu=getuser;gs=getscratch;mg=maygetchar
 bbsidentify bbs;cv=left(word(result,3),4);cnet4=(datatype(cv,"n")=1&cv>"4.25")
 bbsidentify name;g.bbsName=strip(result, 'B');esc="1b5b"x;cty="19"x;ctq="11"x
 rs="rexxsupport.library";if ~show("l",rs) then if ~addlib(rs,0,-30) then exit
-parse source . . fp .; df=left(fp,max(lastpos('/',fp),lastpos(':',fp))) 
+parse source . . fp .; df=left(fp,max(lastpos('/',fp),lastpos(':',fp)))
 changewhere "BBSLink Wall"
 /**************************************************************************/
 /*                                                                        */
@@ -65,8 +65,8 @@ changewhere "BBSLink Wall"
 /**************************************************************************/
 /* SysOp Configurable Options *********************************************/
 
-/* Enter information from the email you received here */ 
-b.SystemCode       ='yourcodehere' /* <--Enter your System Code */ 
+/* Enter information from the email you received here */
+b.SystemCode       ='yourcodehere' /* <--Enter your System Code */
 b.AuthorizationCode='yourcodehere' /* <--Enter your Authorization Code */
 b.SchemeCode       ='yourcodehere' /* <--Enter your Scheme Code */
 
@@ -82,7 +82,7 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
                            This is for debug purposes and should not be left
                            on during normal operations */
 
-/* ok to change these as needed for your system */                          
+/* ok to change these as needed for your system */
 g.timeout          = 20 /* API http request timeout in seconds */
 
 /* ok to change these messages, but do not add ANSI or MCI codes. */
@@ -98,7 +98,7 @@ s.anyKey           = 'Smash any key to continue..'
 
 c.err  = esc"0;31m"
 c.blink= esc"5m"
-c.reset= esc"0m" 
+c.reset= esc"0m"
 
 if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
 
@@ -117,10 +117,10 @@ prompt 5 NOYES "c6Write on the wall [y,N]? "
 /* If they answered no, quit. */
 if result=='No' then exit
 else call check
-  
+
 /* Find out if user already has a registered user name */
 tr "  Looking for your pen - it's around here somewhere..."
-  
+
 b.key=randomString()
 b.ktoken=getToken(b.key)
 b.username=sendToServer("username",'')
@@ -145,15 +145,15 @@ else if (b.username = "*notexist") then do
     if (nuresult = "*created") then do
       tr "  Welcome to the wall, " || getnewusername
       leave
-    end 
-    else if (nuresult = "*inuse") then do 
+    end
+    else if (nuresult = "*inuse") then do
       tr "  That user name is already in use, choose another!"
     end
     else if (nuresult = "*inval") then do
       tr "  That user name is invalid, choose another!"
-    end 
+    end
   end
-  
+
   /* Even if they didn't before, they should have a user name now. If they still
    don't for some reason, show an error and quit. This will also catch
    authentication errors. */
@@ -162,7 +162,7 @@ else if (b.username = "*notexist") then do
   if (substr(b.username, 1, 1) = '*') then do
     tr "  Sorry, I can't find it :-(    (An error occurred ["b.username"])"
     signal EXIT
-  end 
+  end
 end
 
 /* Get the user's thoughts - in 64 characters or less! */
@@ -171,7 +171,7 @@ se ":"
 
 /* Take the wall post */
 prompt 64 NORMAL ""
-newPost=result 
+newPost=result
 if upper(result)=="Q" then exit
 else call check
 
@@ -183,33 +183,33 @@ if length(newPost) > 2 then do
   b.ktoken=getToken(b.key)
   postresult = sendToServer("post", newPost)
   /* Check result of post attempt */
-  if (postresult = "*post") then do 
+  if (postresult = "*post") then do
     /* Successful */
     tr "  Post successful!"
-    /* Show the wall! */   
-    call getWall     
-    tr                                 
-  end 
+    /* Show the wall! */
+    call getWall
+    tr
+  end
   else if (postresult = "*int") then do
     /* Last post < 10 minutes ago */
     se "  Sorry, you have to wait 10 minutes between posts. "
-  end 
+  end
   else if (postresult = "*inval") then do
     /* Post contained > 64 characters */
     se "  Your post contained too many characters (max length 64 chars)."
   end
-  else do 
+  else do
     /* Post failed, unknown reason */
     tr "post result: "postresult
     se "  Post failed :-( "
-  end 
+  end
 end
 else do
   se "  Your post was too short! "
 end
 
 EXIT:
-  se s.anyKey 
+  se s.anyKey
   gc
   tr
   exit
@@ -219,23 +219,23 @@ EXIT:
 /* Delete the results file */
 deleteFile: procedure expose tr g.
   parse arg filename
-  
+
   filePath= g.tempPath||filename
-  
+
   if exists(filePath) then do
     do delLoop = 1 to 3
       if delete(filepath) then leave delLoop
       call delay(25)
     end
     if g.debug & exists(filePath) then tr 'BBSLINKWALL: Unable to delete 'filePath' after 'delLoop' tries.'
-  end 
+  end
 return
 
-/* fetches web request 
+/* fetches web request
    @param uri       the url to retrieve
    @param fileName  the filename where to store results
    @param type      0=retrieve, 1=send
-   
+
    returns results as an array called resultsArr structured as:
      resultArr.0 = line count
      resultArr.1 = line 1 string
@@ -243,31 +243,31 @@ return
       .
       .
       .
-     resultArr.n = line n string  
+     resultArr.n = line n string
 */
 fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
-  parse arg uri, fileName, type 
-  
+  parse arg uri, fileName, type
+
   filePath=g.tempPath||fileName
   userAgent= "http_get/1.0 (AmigaOS 3.1; Amiga; 680x0; ks:40.68; wb:40.42) CNet/5 BBSLinkWall/"strip(ver,'L','v')" ("g.bbsName")"
-  
-  /* run through outer loop at least once, repeat the loop if g.autoRetry is 
+
+  /* run through outer loop at least once, repeat the loop if g.autoRetry is
      enabled and line count in resultArr.0 == 0 */
-     
-  do until ~g.autoRetry | resultArr.0>0 
+
+  do until ~g.autoRetry | resultArr.0>0
     /* clear any previous data in resultArr */
     drop resultArr.
-    
+
     /* init resultArr */
     resultArr.0=0
     resultArr.1=""
-    
+
     /* make web request */
     httpcmd = 'run >nil: http_get -u "'userAgent'" "'uri'" >'filePath
     address command httpcmd
-    
+
     call time('r')
-    
+
     /* show status message */
     if g.showStatus then do
       if type then reqType=s.sending
@@ -275,11 +275,11 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
       dotCount=0
       se reqType
     end
-    
-    /* inner loop checks if the results file is ready and exits if the 
+
+    /* inner loop checks if the results file is ready and exits if the
        file is ready or the timeout period has been reached */
-      
-    bufferflush   
+
+    bufferflush
     do until time('e') > g.timeout + 1
       mg
       if result=="NOCHAR" then nop
@@ -290,9 +290,9 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
         leave /* cause loop to exit */
       end
       else call check
-      
+
       call delay(25) /* 1/2 second */
-   
+
       /* check if results file is ready yet */
       if exists(filePath) then do
         if open(BLW, filePath, R) then do
@@ -310,49 +310,49 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
         else if g.debug then tr "BBSLINKWALL: "filePath" exists but could not open"
       end
       else if g.debug then tr "BBSLINKWALL: "filePath" does not exist, could not open"
-      
+
       /* update status message */
-      if g.showStatus then do 
+      if g.showStatus then do
         if dotCount==0 then se " "s.escToCancel
         else se "."
         dotCount = dotCount + 1
-      end    
+      end
     end
     bufferflush
-    
+
     /* clear status message */
     if g.showStatus then do
       computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
       se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
     end
   end
-  
+
   /* check if request timed out */
   if resultArr.0==0 then do
     resultArr.0=1
     reslutArr.1=s.reqTimedOut
-  end  
+  end
 return
 
 /* Show the wall! */
-getWall: procedure expose se tr mg esc ver s. g. resultArr. 
+getWall: procedure expose se tr mg esc ver s. g. resultArr.
   filename= "user"g.uid
-  
+
   /* Delete the last results file in case it wasn't deleted last time */
   call deleteFile(filename)
 
   /* Fetch the wall from BBSLink */
   rcd="http://games.bbslink.net/wall.php?action=show"
   call fetchWebRequest(rcd, filename, 0)
-  
+
   /* display wall */
   if resultArr.0 > 0 then do
-    cls 
+    cls
     do i=1 to resultArr.0
       tr resultArr.i
     end
   end
-  
+
   /* Delete the results file */
   call deleteFile(filename)
 return
@@ -360,9 +360,9 @@ return
 /* Send data to the server */
 sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   parse arg action, data
-  
+
   filename= "user"g.uid
-  
+
   /* Assemble the Authentication Request URL */
   xAction ='action='action
   xKey    ='&key='b.key
@@ -373,23 +373,23 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   xToken  ='&token='b.ktoken
   xType   ='&type=amiga'
   xVersion='&version=2.0.1'
-  
+
   /* URL encode the user input string */
-  call urlEncode(data)  
-  
+  call urlEncode(data)
+
   rcd = 'http://games.bbslink.net/wall.php?'xAction||xKey||xUser||xSystem||xAuth||xCode||xToken||xType||xVersion
-  if length(data) > 0 then rcd=rcd'&data='data 
-    
+  if length(data) > 0 then rcd=rcd'&data='data
+
   /* FOR TESTING ONLY REMOVE */
   tr rcd
-  if action=="post" then exit 
+  if action=="post" then exit
 
   /* Delete the last results file in case it wasn't deleted last time */
   call deleteFile(filename)
 
   /* Fetch the authorization request */
   call fetchWebRequest(rcd, filename, 1)
-  
+
   /* pull out results from resultArr */
   body=''
   if resultArr.0 > 0 then do
@@ -398,7 +398,7 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
     end
   end
   else if g.debug then tr 'BBSLINKWALL: Unable to display results. Web request likely failed.'
-    
+
   /* Delete the results file */
   call deleteFile(filename)
 return body
@@ -415,7 +415,7 @@ getToken: procedure expose se tr mg esc ver s. g. resultArr.
   /* Fetch the token from BBSLink */
   rcd='http://games.bbslink.net/token.php?key='key
   call fetchWebRequest(rcd, filename, 0)
-  
+
   /* pull out token from resultArr */
   b.ktoken=''
   if resultArr.0 > 0 then do
@@ -426,23 +426,23 @@ getToken: procedure expose se tr mg esc ver s. g. resultArr.
   end
   else do
     tr 'Unable to open token file. Exiting.'
-    exit 
+    exit
   end
-  
+
   /* Delete the results file */
   call deleteFile(filename)
 return b.ktoken
 
-/* replace - replace srch text with repl text in text 
+/* replace - replace srch text with repl text in text
       ->replace("astrologer","log","nom")
       astronomer
-      
+
    Source: Using Arexx on the Amiga, page 313
 */
 replace: procedure
   parse arg text, srch, repl
   if index(text, srch)==0 then return text
-  
+
   slen = length(srch)
   tlen = length(text)
   do until tlen = 0
@@ -457,7 +457,7 @@ return text
 /* word wraps an input string at a given width and will not split any words
    @param text  the input string to word wrap
    @param width the width to wrap at
-  
+
    results will be placed into an array called resultsArr structured as:
      resultArr.0 = line count
      resultArr.1 = line 1 string
@@ -465,27 +465,27 @@ return text
       .
       .
       .
-     resultArr.n = line n string     
+     resultArr.n = line n string
 */
 wordWrap: procedure expose resultArr.
   parse arg text, width
-  
+
   /* clear any previous data in the results array */
   drop resultArr.
-  
+
   /* line count is held at position 0, init it to line 1 */
   resultArr.0 = 1
-  
+
   if length(text) <= width then do
-    resultArr.1 = text 
+    resultArr.1 = text
     return
   end
 
   line = resultArr.0
   resultArr.1 = ""
-  do while text ~= "" 
+  do while text ~= ""
       parse var text word text
-      
+
       /* check if current line + next word < width */
       if length(resultArr.line) + length(word) + 1 <= width then do
           /* add word to current line */
@@ -493,14 +493,14 @@ wordWrap: procedure expose resultArr.
           else resultArr.line = resultArr.line" "word
       end
       else do
-          /* start new line with with next word */    
-          line = line + 1 
+          /* start new line with with next word */
+          line = line + 1
           resultArr.line = word
     end
   end
-    
+
   /* store final line count at position 0 of the array */
-  resultArr.0 = line      
+  resultArr.0 = line
 return
 
 /* https://www.cgisecurity.com/lib/URLEmbeddedAttacks.html                */
@@ -524,11 +524,11 @@ return
 
 urlEncode: procedure
   parse arg inputString
-  
+
   call getUrlEncodeTables
-  do i=0 to urlEncode.max 
+  do i=0 to urlEncode.max
     encodedString= replace(inputString, urlEncode.in.i, urlEncode.out.i)
-  end                     
+  end
   encodedString=space(endcodedString, 1, "+")
 return encodedString
 
@@ -539,19 +539,19 @@ getUrlEncodeTable:
   urlEncode.in.2="#";    urlEncode.out.2="%23"
   urlEncode.in.3="<";    urlEncode.out.3="%3C"
   urlEncode.in.4=">";    urlEncode.out.4="%3E"
-  
+
   /* Reserved characters */
-  urlEncode.in.5="$";    urlEncode.out.5="%24" 
-  urlEncode.in.6="&";    urlEncode.out.6="%26" 
-  urlEncode.in.7="+";    urlEncode.out.7="%2B" 
-  urlEncode.in.8=",";    urlEncode.out.8="%2C" 
-  urlEncode.in.9="/";    urlEncode.out.9="%2F" 
+  urlEncode.in.5="$";    urlEncode.out.5="%24"
+  urlEncode.in.6="&";    urlEncode.out.6="%26"
+  urlEncode.in.7="+";    urlEncode.out.7="%2B"
+  urlEncode.in.8=",";    urlEncode.out.8="%2C"
+  urlEncode.in.9="/";    urlEncode.out.9="%2F"
   urlEncode.in.10=":";   urlEncode.out.10="%3A"
   urlEncode.in.11=";";   urlEncode.out.11="%3B"
   urlEncode.in.12="=";   urlEncode.out.12="%3D"
   urlEncode.in.13="?";   urlEncode.out.13="%3F"
-  urlEncode.in.14="@";   urlEncode.out.14="%40" 
-  
+  urlEncode.in.14="@";   urlEncode.out.14="%40"
+
   /* Unwise characters */
   urlEncode.in.15="[";   urlEncode.out.15="%5B"
   urlEncode.in.16="\";   urlEncode.out.16="%5C"
@@ -561,7 +561,7 @@ getUrlEncodeTable:
   urlEncode.in.20="{";   urlEncode.out.20="%7B"
   urlEncode.in.21="|";   urlEncode.out.21="%7C"
   urlEncode.in.22="}";   urlEncode.out.22="%7D"
-  
+
   /* ASCII control characters */
   urlEncode.in.23="00"x; urlEncode.out.23="%00" /* NUL null character         */
   urlEncode.in.24="01"x; urlEncode.out.24="%01" /* SOH start of header        */
@@ -596,27 +596,27 @@ getUrlEncodeTable:
   urlEncode.in.53="1e"x; urlEncode.out.53="%1E" /* RS  record separator       */
   urlEncode.in.54="1f"x; urlEncode.out.54="%1F" /* US  unit separator         */
   urlEncode.in.55="7f"x; urlEncode.out.55="%7F" /* Delete                     */
-  
-  urlEncode.max=55  
+
+  urlEncode.max=55
 return
 
 guruError: procedure expose tr se gc c. g.
-  parse arg errMsg1, errMsg2 
+  parse arg errMsg1, errMsg2
   cls
   tr c.err
-  
+
   tr c.blink"Û"copies('ß', g.maxCol-2)"Û"
-  
+
   call wordWrap(errMsg1, g.maxCol-4)
   do i=1 to resultArr.0
     tr c.blink"Û "c.reset||c.err|| center(resultArr.i, g.maxCol-4)||c.blink" Û"
   end
-  
+
   call wordWrap(errMsg2, g.maxCol-4)
   do i=1 to resultArr.0
     tr c.blink"Û "c.reset||c.err|| center(resultArr.i, g.maxCol-4)||c.blink" Û"
   end
-  
+
   tr c.blink"Û"copies('Ü', g.maxCol-2)"Û"c.reset
   tr
   se c.err||center("Press ANY KEY to continue..", g.maxCol)
@@ -952,7 +952,7 @@ randomString: procedure
 return tkey
 
 /**************************************************************************/
-  
+
 CHECK:
   if ARG() & ARG(1)~="###PANIC" then return ARG(1)
   getcarrier
@@ -963,7 +963,7 @@ CHECK:
   logentry "Lost Carrier!!"
   bufferflush
   exit
-  
+
 SYNTAX:
 ERROR:
 IOERR:
