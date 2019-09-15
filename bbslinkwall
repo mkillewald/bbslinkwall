@@ -101,11 +101,12 @@ c.blink= esc"5m"
 c.reset= esc"0m" 
 
 if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
-if ~exists("c:http_get") then signal badHttp
-  
-gu 40;g.uid = space(result ,0)
 
+gu 40; g.uid = space(result ,0)  /* account id */
+gu 27; g.maxCol=result-1         /* term width */
 g.debug = g.debug&g.uid==1
+
+if ~exists("c:http_get") then signal badHttp
 
 /* Show the wall! */
 call getWall
@@ -453,6 +454,55 @@ replace: procedure
   end
 return text
 
+/* word wraps an input string at a given width and will not split any words
+   @param text  the input string to word wrap
+   @param width the width to wrap at
+  
+   results will be placed into an array called resultsArr structured as:
+     resultArr.0 = line count
+     resultArr.1 = line 1 string
+     resultArr.2 = line 2 string
+      .
+      .
+      .
+     resultArr.n = line n string     
+*/
+wordWrap: procedure expose resultArr.
+  parse arg text, width
+  
+  /* clear any previous data in the results array */
+  drop resultArr.
+  
+  /* line count is held at position 0, init it to line 1 */
+  resultArr.0 = 1
+  
+  if length(text) <= width then do
+    resultArr.1 = text 
+    return
+  end
+
+  line = resultArr.0
+  resultArr.1 = ""
+  do while text ~= "" 
+      parse var text word text
+      
+      /* check if current line + next word < width */
+      if length(resultArr.line) + length(word) + 1 <= width then do
+          /* add word to current line */
+          if resultArr.line=="" then resultArr.line = word
+          else resultArr.line = resultArr.line" "word
+      end
+      else do
+          /* start new line with with next word */    
+          line = line + 1 
+          resultArr.line = word
+    end
+  end
+    
+  /* store final line count at position 0 of the array */
+  resultArr.0 = line      
+return
+
 /* https://www.cgisecurity.com/lib/URLEmbeddedAttacks.html                */
 /*                                                                        */
 /* The standard (rfc2396) defines the following classes of characters:    */
@@ -550,7 +600,7 @@ getUrlEncodeTable:
   urlEncode.max=55  
 return
 
-guruError: procedure expose tr c. g.
+guruError: procedure expose tr se gc c. g.
   parse arg errMsg1, errMsg2 
   cls
   tr c.err
@@ -568,12 +618,15 @@ guruError: procedure expose tr c. g.
   end
   
   tr c.blink"Û"copies('Ü', g.maxCol-2)"Û"c.reset
+  tr
+  se c.err||center("Press ANY KEY to continue..", g.maxCol)
+  gc
 return
 
 badHttp:
   errMsg1 = "Could not find http_get! Please re-read the install instructions."
   errMsg2 = "Guru Meditation #00000000:084DH77F"
-  call guruErr(errMsg1, errMsg2)
+  call guruError(errMsg1, errMsg2)
   exit
 
 /* This function makes a MD5 digest checksum from a given string */
