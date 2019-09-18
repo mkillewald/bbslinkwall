@@ -348,6 +348,7 @@ getWall: procedure expose se tr mg esc ver s. g. resultArr.
   /* display wall */
   if resultArr.0 > 0 then do
     cls
+    se ctq"@4}" /* disable more */
     do i=1 to resultArr.0
       tr resultArr.i
     end
