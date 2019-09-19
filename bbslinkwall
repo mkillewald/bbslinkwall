@@ -485,18 +485,18 @@ wordWrap: procedure expose resultArr.
   line = resultArr.0
   resultArr.1 = ""
   do while text ~= ""
-      parse var text word text
+    parse var text word text
 
-      /* check if current line + next word < width */
-      if length(resultArr.line) + length(word) + 1 <= width then do
-          /* add word to current line */
-          if resultArr.line=="" then resultArr.line = word
-          else resultArr.line = resultArr.line" "word
-      end
-      else do
-          /* start new line with with next word */
-          line = line + 1
-          resultArr.line = word
+    /* check if current line + next word < width */
+    if length(resultArr.line) + length(word) + 1 <= width then do
+      /* add word to current line */
+      if resultArr.line=="" then resultArr.line = word
+      else resultArr.line = resultArr.line" "word
+    end
+    else do
+      /* start new line with with next word */
+      line = line + 1
+      resultArr.line = word
     end
   end
 
