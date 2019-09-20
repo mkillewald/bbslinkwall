@@ -362,7 +362,7 @@ return
 sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   parse arg action, data
 
-  filename= "user"g.uid
+  filename= "post"g.uid
 
   /* Assemble the Authentication Request URL */
   xAction ='action='action
