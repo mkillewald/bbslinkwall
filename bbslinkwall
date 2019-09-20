@@ -336,14 +336,14 @@ return
 
 /* Show the wall! */
 getWall: procedure expose se tr mg esc ver s. g. resultArr.
-  filename= "user"g.uid
+  filename= "wall"g.uid
 
   /* Delete the last results file in case it wasn't deleted last time */
   call deleteFile(filename)
 
   /* Fetch the wall from BBSLink */
-  rcd="http://games.bbslink.net/wall.php?action=show"
-  call fetchWebRequest(rcd, filename, 0)
+  uri="http://games.bbslink.net/wall.php?action=show"
+  call fetchWebRequest(uri, filename, 0)
 
   /* display wall */
   if resultArr.0 > 0 then do
@@ -378,18 +378,18 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   /* URL encode the user input string */
   call urlEncode(data)
 
-  rcd = 'http://games.bbslink.net/wall.php?'xAction||xKey||xUser||xSystem||xAuth||xCode||xToken||xType||xVersion
-  if length(data) > 0 then rcd=rcd'&data='data
+  uri = 'http://games.bbslink.net/wall.php?'xAction||xKey||xUser||xSystem||xAuth||xCode||xToken||xType||xVersion
+  if length(data) > 0 then uri=uri'&data='data
 
   /* FOR TESTING ONLY REMOVE */
-  tr rcd
+  tr uri
   if action=="post" then exit
 
   /* Delete the last results file in case it wasn't deleted last time */
   call deleteFile(filename)
 
   /* Fetch the authorization request */
-  call fetchWebRequest(rcd, filename, 1)
+  call fetchWebRequest(uri, filename, 1)
 
   /* pull out results from resultArr */
   body=''
@@ -408,14 +408,14 @@ return body
 getToken: procedure expose se tr mg esc ver s. g. resultArr.
   parse arg key
 
-  filename= "user"g.uid
+  filename= "token"g.uid
 
   /* Delete the last results file in case it wasn't deleted last time */
   call deleteFile(filename)
 
   /* Fetch the token from BBSLink */
-  rcd='http://games.bbslink.net/token.php?key='key
-  call fetchWebRequest(rcd, filename, 0)
+  uri='http://games.bbslink.net/token.php?key='key
+  call fetchWebRequest(uri, filename, 0)
 
   /* pull out token from resultArr */
   b.ktoken=''
