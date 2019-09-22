@@ -85,7 +85,7 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
 /* ok to change these as needed for your system */
 g.timeout          = 20 /* API http request timeout in seconds */
 
-/* ok to change these messages, but do not add ANSI or MCI codes. */
+/* ok to change these messages, feel free to add ANSI or MCI codes. */
 s.retrieving       = 'Retrieving Data'
 s.sending          = 'Sending Data'
 s.reqTimedOut      = 'Request timed out, please try again later.'
@@ -322,8 +322,9 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
 
     /* clear status message */
     if g.showStatus then do
-      computeLen = length(reqType) + length(s.escToCancel) + dotCount + 1
-      se esc||computeLen"D"copies(' ', computeLen)||esc||computeLen"D"
+    	CR = "0d"x
+      statusLen = length(reqType) + length(s.escToCancel) + dotCount + 1
+      se CR||copies(' ', statusLen)||CR
     end
   end
 
