@@ -336,7 +336,7 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
 return
 
 /* Show the wall! */
-getWall: procedure expose se tr mg esc ver s. g. resultArr.
+getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
   filename= "wall"g.uid
 
   /* Delete the last results file in case it wasn't deleted last time */
