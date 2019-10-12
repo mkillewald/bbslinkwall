@@ -70,17 +70,28 @@ b.SystemCode       ='yourcodehere' /* <--Enter your System Code */
 b.AuthorizationCode='yourcodehere' /* <--Enter your Authorization Code */
 b.SchemeCode       ='yourcodehere' /* <--Enter your Scheme Code */
 
-/* this path will be created as needed */
-g.tempPath         = 'RAM:BBSLINKWALL/' /* must end with a trailing slash */
+/* These paths must end with a trailing slash '/' */
+g.pfilePath        = 'Pfiles:BBSLink/'
+g.tempPath         = 'RAM:BBSLINK/' /* This path will be created as needed */
 
-/* these swtiches (0=off, 1=on) control how the Wall functions */
-g.showStatus       = 1  /* Show http type status messages to the user */
+/* these swtiches control how the Wall functions */
+g.defaultResponse  = 0  /* Write on Wall prompt default response.
+                           0 = No, 1 = Yes */
+g.customHeader     = 1  /* Show custom header when displaying wall based on
+                           the users selected terminal type. (tt1.wallHdr,
+                           tt2.wallHdr, tt2.wallHdr, etc) The custom header
+                           should display no more than 7 lines max.
+                           0 = Off, 1 = On */
+g.showStatus       = 1  /* Show http type status messages to the user.
+                           0 = Off, 1 = On */
 g.autoRetry        = 1  /* Auto-retry web request if it times out or returns
                            a blank result. User may cancel the request by
-                           pressing the ESC key */
+                           pressing the ESC key.
+                           0 = Off, 1 = On */
 g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
                            This is for debug purposes and should not be left
-                           on during normal operations */
+                           on during normal operations.
+                           0 = Off, 1 = On */
 
 /* ok to change these as needed for your system */
 g.timeout          = 20 /* API http request timeout in seconds */
@@ -104,6 +115,7 @@ if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
 
 gu 40; g.uid = space(result ,0)  /* account id */
 gu 27; g.maxCol=result-1         /* term width */
+gu 28; g.termType=result         /* term type */
 g.debug = g.debug&g.uid==1
 
 if ~exists("c:http_get") then signal badHttp
@@ -112,7 +124,8 @@ if ~exists("c:http_get") then signal badHttp
 call getWall
 
 /* Ask user if they want to write to the wall themselves */
-prompt 5 NOYES "c6Write on the wall [y,N]? "
+if g.defaultResponse then prompt 5 YESNO "c6Write on the wall [Y,n]? "
+else prompt 5 NOYES "c6Write on the wall [y,N]? "
 
 /* If they answered no, quit. */
 if result=='No' then exit
@@ -322,7 +335,7 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
 
     /* clear status message */
     if g.showStatus then do
-    	CR = "0d"x
+      CR = "0d"x
       statusLen = length(reqType) + length(s.escToCancel) + dotCount + 1
       se CR||copies(' ', statusLen)||CR
     end
@@ -350,8 +363,18 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
   if resultArr.0 > 0 then do
     cls
     se ctq"@4}" /* disable more */
-    do i=1 to resultArr.0
-      tr resultArr.i
+
+    wallHeader = g.pfilePath"data/tt"g.termType".wallHdr"
+    if g.customHeader & exists(wallHeader) then do
+      call mySendFile(wallHeader)
+      do i=8 to resultArr.0
+        tr resultArr.i
+      end
+    end
+    else do
+      do i=1 to resultArr.0
+        tr resultArr.i
+      end
     end
   end
 
@@ -503,6 +526,30 @@ wordWrap: procedure expose resultArr.
 
   /* store final line count at position 0 of the array */
   resultArr.0 = line
+return
+
+mySendFile: procedure expose tr
+  parse arg filePath
+  if ~exists(filePath) then return
+
+  drop fileArr.
+
+  if open(BLWF, filePath, R) then do
+    /* read results file into fileArr. */
+    line=0
+    do while ~eof(BLWF)
+      line=line+1
+      fileArr.line = readln(BLWF)
+    end
+    /* place line count at fileArr.0 */
+    fileArr.0 = line
+    call close(BLWF)
+
+    /* display fileArr. */
+    do i = 1 to fileArr.0
+      tr fileArr.i
+    end
+  end
 return
 
 /* https://www.cgisecurity.com/lib/URLEmbeddedAttacks.html                */
