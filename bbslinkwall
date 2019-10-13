@@ -68,19 +68,19 @@ changewhere "BBSLink Wall"
 /* SysOp Configurable Options *********************************************/
 
 /* Enter information from the email you received here */
-b.SystemCode       ='yourcodehere' /* <--Enter your System Code */
-b.AuthorizationCode='yourcodehere' /* <--Enter your Authorization Code */
-b.SchemeCode       ='yourcodehere' /* <--Enter your Scheme Code */
+b.SystemCode       ="yourcodehere" /* <--Enter your System Code */
+b.AuthorizationCode="yourcodehere" /* <--Enter your Authorization Code */
+b.SchemeCode       ="yourcodehere" /* <--Enter your Scheme Code */
 
 /* These paths must end with a trailing slash '/' */
-g.pfilePath        = 'Pfiles:BBSLink/' /* This path should be created manually
+g.pfilePath        = "Pfiles:BBSLink/" /* This path should be created manually
                                           during the install process */
-g.tempPath         = 'RAM:BBSLINK/' /* This path will be created automatically
+g.tempPath         = "RAM:BBSLINK/" /* This path will be created automatically
                                        as needed */
 
 /* The X in the below filename will be automatically replaced by the users
-   chosen terminal type, do not hard set a terminal type here */
-g.wallHeaderFile   = g.pfilePath'ttX.wallHeader'
+   chosen terminal type, do not hard set a terminal type here. */
+g.wallHeaderFile   = g.pfilePath||"ttX.wallHeader"
 
 /* these swtiches control how the Wall functions */
 g.defaultResponse  = 0  /* Set default response to the "Write on Wall" prompt.
@@ -106,12 +106,12 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
 g.timeout          = 20 /* API http request timeout in seconds */
 
 /* ok to change these messages, feel free to add ANSI or MCI codes. */
-s.retrieving       = 'Retrieving Data'
-s.sending          = 'Sending Data'
-s.reqTimedOut      = 'Request timed out, please try again later.'
-s.cancelled        = 'Request Cancelled'
-s.escToCancel      = '(ESC to cancel)'
-s.anyKey           = 'Smash any key to continue..'
+s.retrieving       = "Retrieving Data"
+s.sending          = "Sending Data"
+s.reqTimedOut      = "Request timed out, please try again later."
+s.cancelled        = "Request Cancelled"
+s.escToCancel      = "(ESC to cancel)"
+s.anyKey           = "Smash any key to continue.."
 
 /* End of SysOp Configurable Options **************************************/
 /**************************************************************************/
