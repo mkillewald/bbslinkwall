@@ -20,7 +20,8 @@ changewhere "BBSLink Wall"
 /*    v2.0.1 (          ) by k1ds3ns4t10n of -X-caliber BBS               */
 /*      - code cleanup and refactor                                       */
 /*      - renamed g.logErrors switch to g.debug                           */
-/*      - added g.defaultResponse and g.customHeader switches             */
+/*      - added g.defaultResponse and g.showHeader switches               */
+/*      - added custom header files                                       */
 /*      - added URL encoding                                              */
 /*                                                                        */
 /*    v2.0.0 (4 Sep 2019) by k1ds3ns4t10n of -X-caliber BBS               */
