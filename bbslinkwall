@@ -41,7 +41,7 @@ changewhere "BBSLink Wall"
 /*                                                                        */
 /*  INSTALATION INSTRUCTIONS:                                             */
 /*                                                                        */
-/*  1) Create a folder called 'BBSLink' in your PFiles: directory.        */
+/*  1) Create a folder called 'bbslink' in your PFiles: directory.        */
 /*     Copy this file and the tt*.wallHeader files there.                 */
 /*                                                                        */
 /*  2) Download http_get from Aminet and install in C:                    */
