@@ -68,21 +68,22 @@ changewhere "BBSLink Wall"
 /* SysOp Configurable Options *********************************************/
 
 /* Enter information from the email you received here */
-b.SystemCode       ="yourcodehere" /* <--Enter your System Code */
-b.AuthorizationCode="yourcodehere" /* <--Enter your Authorization Code */
-b.SchemeCode       ="yourcodehere" /* <--Enter your Scheme Code */
+b.SystemCode       = "yourcodehere" /* <--Enter your System Code */
+b.AuthorizationCode= "yourcodehere" /* <--Enter your Authorization Code */
+b.SchemeCode       = "yourcodehere" /* <--Enter your Scheme Code */
 
-/* These paths must end with a trailing slash '/' */
-g.pfilePath        = "Pfiles:BBSLink/" /* This path should be created manually
-                                          during the install process */
-g.tempPath         = "RAM:BBSLINK/" /* This path will be created automatically
-                                       as needed */
+/* This path should be created manually when installing */
+g.pfilePath        = "pfiles:bbsink/" /* must end with a trailing slash */
+
+/* This path will be created automatically as needed */
+g.tempPath         = "RAM:BBSLINK/"    /* must end with a trailing slash */
+
 
 /* The X in the below filename will be automatically replaced by the users
    chosen terminal type, do not hard set a terminal type here. */
 g.wallHeaderFile   = g.pfilePath||"ttX.wallHeader"
 
-/* these swtiches control how the Wall functions */
+/* These swtiches control how the Wall functions */
 g.defaultResponse  = 0  /* Set default response to the "Write on Wall" prompt.
                            0 = No, 1 = Yes */
 g.showCustomHeader = 1  /* Show custom header when displaying the wall based on
@@ -102,10 +103,10 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
                            on during normal operations.
                            0 = Off, 1 = On */
 
-/* ok to change these as needed for your system */
+/* Ok to change these as needed for your system */
 g.timeout          = 20 /* API http request timeout in seconds */
 
-/* ok to change these messages, feel free to add ANSI or MCI codes. */
+/* Ok to change these messages, feel free to add ANSI or MCI codes. */
 s.retrieving       = "Retrieving Data"
 s.sending          = "Sending Data"
 s.reqTimedOut      = "Request timed out, please try again later."
@@ -374,7 +375,7 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
     se ctq"@4}" /* disable more */
 
     /* check for custom header files */
-    g.wallHeaderFile = replace(g.wallHeaderFile, "X", g.termType)
+    g.wallHeaderFile = translate(g.wallHeaderFile, g.termType, "X")
     if g.showCustomHeader & exists(g.wallHeaderFile) then do
       /* g.showCustomHeader is enabled and file found */
       call mySendFile(g.wallHeaderFile)
