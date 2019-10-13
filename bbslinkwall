@@ -41,7 +41,7 @@ changewhere "BBSLink Wall"
 /*  INSTALATION INSTRUCTIONS:                                             */
 /*                                                                        */
 /*  1) Create a folder called 'BBSLink' in your PFiles: directory.        */
-/*     Copy this file there.                                              */
+/*     Copy this file and the tt*.wallHeader files there.                 */
 /*                                                                        */
 /*  2) Download http_get from Aminet and install in C:                    */
 /*     https://aminet.net/package/comm/tcp/http_get                       */
@@ -79,15 +79,14 @@ g.tempPath         = 'RAM:BBSLINK/' /* This path will be created automatically
 
 /* The X in the below filename will be automatically replaced by the users
    chosen terminal type, do not hard set a terminal type here */
-g.wallHeaderFile   = g.pfilePath'data/ttX.wallHeader'
+g.wallHeaderFile   = g.pfilePath'ttX.wallHeader'
 
 /* these swtiches control how the Wall functions */
 g.defaultResponse  = 0  /* Write on Wall prompt default response.
                            0 = No, 1 = Yes */
 g.showHeader       = 1  /* Show custom header when displaying the wall based on
                            the users chosen terminal type. The custom header
-                           files are located in the 'pfiles:bbslink/data/'
-                           folder and should display no more than 7 lines max.
+                           file should display no more than 7 lines max.
                            0 = Off, 1 = On */
 g.showStatus       = 1  /* Show http type status messages to the user.
                            0 = Off, 1 = On */
