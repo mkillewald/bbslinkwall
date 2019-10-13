@@ -131,6 +131,7 @@ g.debug = g.debug&g.uid==1
 if ~exists("c:http_get") then signal badHttp
 
 /* Show the wall! */
+se esc"0;36m"
 call getWall
 
 /* Ask user if they want to write to the wall themselves */
