@@ -72,16 +72,20 @@ b.AuthorizationCode='yourcodehere' /* <--Enter your Authorization Code */
 b.SchemeCode       ='yourcodehere' /* <--Enter your Scheme Code */
 
 /* These paths must end with a trailing slash '/' */
-g.pfilePath        = 'Pfiles:BBSLink/'
-g.tempPath         = 'RAM:BBSLINK/' /* This path will be created as needed */
+g.pfilePath        = 'Pfiles:BBSLink/' /* This path should be created manually
+                                          during the install process */
+g.tempPath         = 'RAM:BBSLINK/' /* This path will be created automatically
+                                       as needed */
 
 /* these swtiches control how the Wall functions */
 g.defaultResponse  = 0  /* Write on Wall prompt default response.
                            0 = No, 1 = Yes */
-g.customHeader     = 1  /* Show custom header when displaying wall based on
-                           the users selected terminal type. (tt1.wallHdr,
-                           tt2.wallHdr, tt2.wallHdr, etc) The custom header
-                           should display no more than 7 lines max.
+g.customHeader     = 1  /* Show custom header when displaying the wall based on
+                           the users chosen terminal type: tt0.wallHdr (ASCII),
+                           tt1.wallHdr (C64), tt2.wallHdr (IBM CP437 ANSI),
+                           tt3.wallHdr (Amiga Topaz), or tt4.wallHdr (Skypix).
+                           The custom header should display no more than 7
+                           lines max.
                            0 = Off, 1 = On */
 g.showStatus       = 1  /* Show http type status messages to the user.
                            0 = Off, 1 = On */
@@ -116,7 +120,7 @@ if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
 
 gu 40; g.uid = space(result ,0)  /* account id */
 gu 27; g.maxCol=result-1         /* term width */
-gu 28; g.termType=result         /* term type */
+gu 28; g.termType=result         /* term type  */
 g.debug = g.debug&g.uid==1
 
 if ~exists("c:http_get") then signal badHttp
@@ -398,17 +402,13 @@ sendToServer: procedure expose se tr mg esc ver b. s. g. resultArr.
   xCode   ='&scheme='MD5(b.SchemeCode || b.ktoken)
   xToken  ='&token='b.ktoken
   xType   ='&type=amiga'
-  xVersion='&version=2.0.1'
+  xVersion='&version=1.0.0' /* TODO: update version */
 
   /* URL encode the user input string */
-  call urlEncode(data)
+  encodedData = urlEncode(data)
 
   uri = 'http://games.bbslink.net/wall.php?'xAction||xKey||xUser||xSystem||xAuth||xCode||xToken||xType||xVersion
-  if length(data) > 0 then uri=uri'&data='data
-
-  /* FOR TESTING ONLY REMOVE */
-  tr uri
-  if action=="post" then exit
+  if length(data) > 0 then uri=uri'&data='encodedData
 
   /* Delete the last results file in case it wasn't deleted last time */
   call deleteFile(filename)
@@ -562,7 +562,6 @@ return
 /* The standard (rfc2396) defines the following groupings of characters   */
 /* that must be escaped to be included within a URI:                      */
 /*                                                                        */
-/* Grouping Characters                                                    */
 /* Control: <US-ASCII coded characters 00-1F and 7F hexadecimal>          */
 /*   Space: <US-ASCII coded character 20 hexadecimal>                     */
 /*  Delims: < > # % "                                                     */
@@ -572,14 +571,16 @@ return
 /*  https://www.url-encode-decode.com/                                    */
 /*  https://www.w3schools.com/tags/ref_urlencode.asp                      */
 
-urlEncode: procedure
+urlEncode: procedure expose tr
   parse arg inputString
 
-  call getUrlEncodeTables
+  encodedString = inputString
+
+  call getUrlEncodeTable
   do i=0 to urlEncode.max
-    encodedString= replace(inputString, urlEncode.in.i, urlEncode.out.i)
+    encodedString= replace(encodedString, urlEncode.in.i, urlEncode.out.i)
   end
-  encodedString=space(endcodedString, 1, "+")
+  encodedString=space(encodedString, 1, "+")
 return encodedString
 
 getUrlEncodeTable:
