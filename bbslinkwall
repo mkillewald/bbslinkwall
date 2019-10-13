@@ -83,11 +83,13 @@ g.tempPath         = 'RAM:BBSLINK/' /* This path will be created automatically
 g.wallHeaderFile   = g.pfilePath'ttX.wallHeader'
 
 /* these swtiches control how the Wall functions */
-g.defaultResponse  = 0  /* Write on Wall prompt default response.
+g.defaultResponse  = 0  /* Set default response to the "Write on Wall" prompt.
                            0 = No, 1 = Yes */
-g.showHeader       = 1  /* Show custom header when displaying the wall based on
+g.showCustomHeader = 1  /* Show custom header when displaying the wall based on
                            the users chosen terminal type. The custom header
                            file should display no more than 7 lines max.
+                           Setting this to off will display the default BBSLink
+                           ANSI header to all users.
                            0 = Off, 1 = On */
 g.showStatus       = 1  /* Show http type status messages to the user.
                            0 = Off, 1 = On */
@@ -371,14 +373,17 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
     cls
     se ctq"@4}" /* disable more */
 
+    /* check for custom header files */
     g.wallHeaderFile = replace(g.wallHeaderFile, "X", g.termType)
-    if g.showHeader & exists(g.wallHeaderFile) then do
+    if g.showCustomHeader & exists(g.wallHeaderFile) then do
+      /* g.showCustomHeader is enabled and file found */
       call mySendFile(g.wallHeaderFile)
       do i=8 to resultArr.0
         tr resultArr.i
       end
     end
     else do
+      /* g.showCustomHeader is disabled or file not found */
       do i=1 to resultArr.0
         tr resultArr.i
       end
@@ -1026,13 +1031,10 @@ IOERR:
   e2=e2" "c
   tr e1
   tr e2
-  logentry e1
-  logentry e2
   e=strip(translate(sourceline(sigl),"\{",""))
   do while e~=""
     e3="Source: "left(e,37)
     tr e3
-    logentry e3
     e=substr(e,38)
     end
   bufferflush
