@@ -134,8 +134,8 @@ if ~exists("c:http_get") then signal badHttp
 call getWall
 
 /* Ask user if they want to write to the wall themselves */
-if g.defaultResponse then prompt 5 YESNO "c6Write on the wall [Y,n]? "
-else prompt 5 NOYES "c6Write on the wall [y,N]? "
+if g.defaultResponse then prompt 5 YESNO "Write on the wall [Y,n]? "
+else prompt 5 NOYES "Write on the wall [y,N]? "
 
 /* If they answered no, quit. */
 if result=='No' then exit
@@ -198,7 +198,6 @@ newPost=result
 if upper(result)=="Q" then exit
 else call check
 
-se esc"0;36"
 
 /* If input is more than 2 characters, submit it */
 if length(newPost) > 2 then do
@@ -390,6 +389,8 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
       end
     end
   end
+
+  se esc"0;36m"
 
   /* Delete the results file */
   call deleteFile(filename)
