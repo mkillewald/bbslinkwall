@@ -42,7 +42,7 @@ changewhere "BBSLink Wall"
 /*  INSTALATION INSTRUCTIONS:                                             */
 /*                                                                        */
 /*  1) Create a folder called 'bbslink' in your PFiles: directory.        */
-/*     Copy this file and the tt*.wallHeader files there.                 */
+/*     Copy this file and the *.wallHeader files there.                   */
 /*                                                                        */
 /*  2) Download http_get from Aminet and install in C:                    */
 /*     https://aminet.net/package/comm/tcp/http_get                       */
@@ -73,15 +73,17 @@ b.AuthorizationCode= "yourcodehere" /* <--Enter your Authorization Code */
 b.SchemeCode       = "yourcodehere" /* <--Enter your Scheme Code */
 
 /* This path should be created manually when installing */
-g.pfilePath        = "pfiles:bbslink/" /* must end with a trailing slash */
+g.pfilePath        = "PFILES:bbslink/" /* must end with a trailing slash */
 
 /* This path will be created automatically as needed */
 g.tempPath         = "RAM:BBSLINK/"    /* must end with a trailing slash */
 
-
-/* The X in the below filename will be automatically replaced by the users
-   chosen terminal type, do not hard set a terminal type here. */
-g.wallHeaderFile   = g.pfilePath||"ttX.wallHeader"
+/* The "sys" in the below filename will be automatically replaced by the users
+   chosen terminal type (tt1, tt2, tt3 or tt4), so do not hard set a terminal
+   type here. Additionally, if the users term width is less than 80, then a 40
+   column header file will be searched for by appending "40" to the end of this
+   filename. */
+g.wallHeaderFile   = g.pfilePath||"sys.wallHeader"
 
 /* These swtiches control how the Wall functions */
 g.defaultResponse  = 0  /* Set default response to the "Write on Wall" prompt.
@@ -372,21 +374,35 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
   /* display wall */
   if resultArr.0 > 0 then do
     cls
-    se ctq"@4}" /* disable more */
+    if g.maxCol >= 79 then se ctq"@4}" /* disable more */
 
-    /* check for custom header files */
-    g.wallHeaderFile = translate(g.wallHeaderFile, g.termType, "X")
-    if g.showCustomHeader & exists(g.wallHeaderFile) then do
-      /* g.showCustomHeader is enabled and file found */
-      call mySendFile(g.wallHeaderFile)
-      do i=8 to resultArr.0
+    if g.showCustomHeader then do
+      /* get name of header file based on term type */
+      header = replace(g.wallHeaderFile, "sys.", "tt"g.termType".")
+      if ~exists(header) then header = g.wallHeaderFile
+
+      /* if users term width is less than 80, check for 40 col header */
+      if g.maxCol < 79 & exists(header"40") then header = header"40"
+    end
+
+    if g.showCustomHeader & exists(header) then do
+      /* g.showCustomHeader is enabled and file found, show custom header */
+      call mySendFile(header)
+    end
+    else do
+      /* g.showCustomHeader is disabled or file not found, show default header */
+      do i=1 to 7
         tr resultArr.i
       end
     end
-    else do
-      /* g.showCustomHeader is disabled or file not found */
-      do i=1 to resultArr.0
-        tr resultArr.i
+
+    /* show remaining portion of the wall */
+    do i=8 to resultArr.0
+      tr resultArr.i
+      checkabort
+      if result == 1 then do
+        tr
+        leave
       end
     end
   end
@@ -541,25 +557,17 @@ return
 
 mySendFile: procedure expose tr
   parse arg filePath
-  if ~exists(filePath) then return
-
-  drop fileArr.
 
   if open(BLWF, filePath, R) then do
-    /* read results file into fileArr. */
-    line=0
     do while ~eof(BLWF)
-      line=line+1
-      fileArr.line = readln(BLWF)
+      tr readln(BLWF)
+      checkabort
+      if result == 1 then do
+        tr
+        leave
+      end
     end
-    /* place line count at fileArr.0 */
-    fileArr.0 = line
     call close(BLWF)
-
-    /* display fileArr. */
-    do i = 1 to fileArr.0
-      tr fileArr.i
-    end
   end
 return
 
