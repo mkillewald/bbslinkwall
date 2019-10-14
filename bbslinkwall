@@ -20,7 +20,7 @@ changewhere "BBSLink Wall"
 /*    v2.0.1 (          ) by k1ds3ns4t10n of -X-caliber BBS               */
 /*     - Code cleanup and refactor                                        */
 /*     - Renamed g.logErrors switch to g.debug                            */
-/*     - Added g.defaultResponse and g.showHeader switches                */
+/*     - Added g.defaultResponse and g.showCustomHeader switches          */
 /*     - Added custom header files                                        */
 /*     - Added URL encoding                                               */
 /*                                                                        */
@@ -56,13 +56,15 @@ changewhere "BBSLink Wall"
 /*     from that email down below where indicated in SysOp Configuralble  */
 /*     Options.                                                           */
 /*                                                                        */
-/*  5) Add a line to your SYSTEXT:sys.welcome file like this:             */
+/*  5) Optional: There are several options you may change based on your   */
+/*     needs in the SysOp Configurable Options block below.               */
 /*                                                                        */
-/*     Q#0 pfiles:bbslink/bbslinkwall}                                    */
+/*  6) Add this file as an Arexx executable anywhere on your system using */
+/*     the path:                                                          */
 /*                                                                        */
-/*     ^ NOTE: "Q" here is a ctrl-Q                                       */
+/*     pfiles:bbslink/bbslinkwall                                         */
 /*                                                                        */
-/*  6) That's it!                                                         */
+/*  7) That's it!                                                         */
 /*                                                                        */
 /**************************************************************************/
 /* SysOp Configurable Options *********************************************/
