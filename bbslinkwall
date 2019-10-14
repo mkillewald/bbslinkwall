@@ -379,12 +379,16 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
     if g.maxCol >= 79 then se ctq"@4}" /* disable more */
 
     if g.showCustomHeader then do
-      /* get name of header file based on term type */
-      header = replace(g.wallHeaderFile, "sys.", "tt"g.termType".")
-      if ~exists(header) then header = g.wallHeaderFile
+      /* get name of header file based on term type and term width */
+      header = replace(g.wallHeaderFile, "sys.", "tt"g.termType".")  /* ttX.wallHeader */
 
       /* if users term width is less than 80, check for 40 col header */
-      if g.maxCol < 79 & exists(header"40") then header = header"40"
+      if g.maxCol < 79 & exists(header"40") then header = header"40" /* ttX.wallHeader40 */
+      else if g.maxCol < 79 & exists(g.wallHeaderFile"40") then
+        header = g.wallHeaderFile"40"                                /* sys.wallHeader40 */
+
+      /* if header does not exist, fall back to global value */
+      if ~exists(header) then header = g.wallHeaderFile              /* sys.wallHeader */
     end
 
     if g.showCustomHeader & exists(header) then do
