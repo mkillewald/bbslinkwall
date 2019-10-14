@@ -73,7 +73,7 @@ b.AuthorizationCode= "yourcodehere" /* <--Enter your Authorization Code */
 b.SchemeCode       = "yourcodehere" /* <--Enter your Scheme Code */
 
 /* This path should be created manually when installing */
-g.pfilePath        = "pfiles:bbsink/" /* must end with a trailing slash */
+g.pfilePath        = "pfiles:bbslink/" /* must end with a trailing slash */
 
 /* This path will be created automatically as needed */
 g.tempPath         = "RAM:BBSLINK/"    /* must end with a trailing slash */
