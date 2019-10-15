@@ -91,7 +91,7 @@ g.wallHeaderFile   = g.pfilePath||"sys.wallHeader"
 g.defaultResponse  = 0  /* Set default response to the "Write on Wall" prompt.
                            0 = No, 1 = Yes */
 g.showCustomHeader = 1  /* Show custom header when displaying the wall based on
-                           the users chosen terminal type. The custom header
+                           the users chosen terminal setting. The custom header
                            file should display no more than 7 lines max.
                            Setting this to off will display the default BBSLink
                            ANSI header to all users.
@@ -109,6 +109,9 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
 
 /* Ok to change these as needed for your system */
 g.timeout          = 20 /* API http request timeout in seconds */
+
+/* Set the default color for prompts and messages */
+c.default          = esc"0;36m"
 
 /* Ok to change these messages, feel free to add ANSI or MCI codes. */
 s.retrieving       = "Retrieving Data"
@@ -135,7 +138,7 @@ g.debug = g.debug&g.uid==1
 if ~exists("c:http_get") then signal badHttp
 
 /* Show the wall! */
-se esc"0;36m"
+se c.default
 call getWall
 
 /* Ask user if they want to write to the wall themselves */
@@ -363,7 +366,7 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
 return
 
 /* Show the wall! */
-getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
+getWall: procedure expose se tr mg esc ver ctq c. s. g. resultArr.
   filename= "wall"g.uid
 
   /* Delete the last results file in case it wasn't deleted last time */
@@ -409,7 +412,7 @@ getWall: procedure expose se tr mg esc ver ctq s. g. resultArr.
     end
   end
 
-  se esc"0;36m"
+  se c.default
 
   /* Delete the results file */
   call deleteFile(filename)
