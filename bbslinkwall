@@ -573,13 +573,15 @@ mySendFile: procedure expose tr
   end
 return
 
-/* https://www.cgisecurity.com/lib/URLEmbeddedAttacks.html                */
+/* https://tools.ietf.org/html/rfc3986                                    */
+/* RFC3986 defines the following classes of characters:                   */
+/* Unreserved: a-z, A-Z, 0-9 and - _ . ~                                  */
+/*  Rreserved: gen-delims / sub-delims                                    */
+/* gen-delims: : / ? # [ ] @                                              */
+/* sub-delims: ! $ & ' ( ) * + , ; =                                      */
 /*                                                                        */
-/* The standard (rfc2396) defines the following classes of characters:    */
-/* Unreserved: a-z, A-Z, 0-9 and _ . ! ~ * ' ( )                          */
-/*   Reserved: ; / ? : @ & = + $ ,                                        */
-/*                                                                        */
-/* The standard (rfc2396) defines the following groupings of characters   */
+/* https://tools.ietf.org/html/rfc2396                                    */
+/* RFC2396 (obsolete) defines the following groupings of characters       */
 /* that must be escaped to be included within a URI:                      */
 /*                                                                        */
 /* Control: <US-ASCII coded characters 00-1F and 7F hexadecimal>          */
@@ -587,11 +589,8 @@ return
 /*  Delims: < > # % "                                                     */
 /*  Unwise: { } | \ ^ [ ] `                                               */
 /*                                                                        */
-/* more info:                                                             */
-/*  https://www.url-encode-decode.com/                                    */
-/*  https://www.w3schools.com/tags/ref_urlencode.asp                      */
 
-urlEncode: procedure expose tr
+urlEncode: procedure
   parse arg inputString
 
   encodedString = inputString
@@ -607,68 +606,73 @@ getUrlEncodeTable:
   /* Delim characters */
   urlEncode.in.0="%";    urlEncode.out.0="%25"
   urlEncode.in.1='"';    urlEncode.out.1="%22"
-  urlEncode.in.2="#";    urlEncode.out.2="%23"
   urlEncode.in.3="<";    urlEncode.out.3="%3C"
   urlEncode.in.4=">";    urlEncode.out.4="%3E"
 
   /* Reserved characters */
-  urlEncode.in.5="$";    urlEncode.out.5="%24"
-  urlEncode.in.6="&";    urlEncode.out.6="%26"
-  urlEncode.in.7="+";    urlEncode.out.7="%2B"
-  urlEncode.in.8=",";    urlEncode.out.8="%2C"
-  urlEncode.in.9="/";    urlEncode.out.9="%2F"
-  urlEncode.in.10=":";   urlEncode.out.10="%3A"
-  urlEncode.in.11=";";   urlEncode.out.11="%3B"
-  urlEncode.in.12="=";   urlEncode.out.12="%3D"
-  urlEncode.in.13="?";   urlEncode.out.13="%3F"
-  urlEncode.in.14="@";   urlEncode.out.14="%40"
+  urlEncode.in.5="!";    urlEncode.out.5="%21"
+  urlEncode.in.6="#";    urlEncode.out.6="%23"
+  urlEncode.in.7="$";    urlEncode.out.7="%24"
+  urlEncode.in.8="&";    urlEncode.out.8="%26"
+  urlEncode.in.9="'";    urlEncode.out.9="%27"
+  urlEncode.in.10="(";   urlEncode.out.10="%28"
+  urlEncode.in.11=")";   urlEncode.out.11="%29"
+  urlEncode.in.12="*";   urlEncode.out.12="%2A"
+  urlEncode.in.13="+";   urlEncode.out.13="%2B"
+  urlEncode.in.14=",";   urlEncode.out.14="%2C"
+  urlEncode.in.15="/";   urlEncode.out.15="%2F"
+  urlEncode.in.16=":";   urlEncode.out.16="%3A"
+  urlEncode.in.17=";";   urlEncode.out.17="%3B"
+  urlEncode.in.18="=";   urlEncode.out.18="%3D"
+  urlEncode.in.19="?";   urlEncode.out.19="%3F"
+  urlEncode.in.20="@";   urlEncode.out.20="%40"
+  urlEncode.in.21="[";   urlEncode.out.21="%5B"
+  urlEncode.in.22="]";   urlEncode.out.22="%5D"
 
   /* Unwise characters */
-  urlEncode.in.15="[";   urlEncode.out.15="%5B"
-  urlEncode.in.16="\";   urlEncode.out.16="%5C"
-  urlEncode.in.17="]";   urlEncode.out.17="%5D"
-  urlEncode.in.18="^";   urlEncode.out.18="%5E"
-  urlEncode.in.19="`";   urlEncode.out.19="%60"
-  urlEncode.in.20="{";   urlEncode.out.20="%7B"
-  urlEncode.in.21="|";   urlEncode.out.21="%7C"
-  urlEncode.in.22="}";   urlEncode.out.22="%7D"
+  urlEncode.in.23="\";   urlEncode.out.23="%5C"
+  urlEncode.in.24="^";   urlEncode.out.24="%5E"
+  urlEncode.in.25="`";   urlEncode.out.25="%60"
+  urlEncode.in.26="{";   urlEncode.out.26="%7B"
+  urlEncode.in.27="|";   urlEncode.out.27="%7C"
+  urlEncode.in.28="}";   urlEncode.out.28="%7D"
 
   /* ASCII control characters */
-  urlEncode.in.23="00"x; urlEncode.out.23="%00" /* NUL null character         */
-  urlEncode.in.24="01"x; urlEncode.out.24="%01" /* SOH start of header        */
-  urlEncode.in.25="02"x; urlEncode.out.25="%02" /* STX start of text          */
-  urlEncode.in.26="03"x; urlEncode.out.26="%03" /* ETX end of text            */
-  urlEncode.in.27="04"x; urlEncode.out.27="%04" /* EOT end of transmission    */
-  urlEncode.in.28="05"x; urlEncode.out.28="%05" /* ENQ enquiry                */
-  urlEncode.in.29="06"x; urlEncode.out.29="%06" /* ACK acknowledge            */
-  urlEncode.in.30="07"x; urlEncode.out.30="%07" /* BEL bell (ring)            */
-  urlEncode.in.31="08"x; urlEncode.out.31="%08" /* BS  backspace              */
-  urlEncode.in.32="09"x; urlEncode.out.32="%09" /* HT  horizontal tab         */
-  urlEncode.in.33="0a"x; urlEncode.out.33="%0A" /* LF  line feed              */
-  urlEncode.in.34="0b"x; urlEncode.out.34="%0B" /* VT  vertical tab           */
-  urlEncode.in.35="0c"x; urlEncode.out.35="%0C" /* FF  form feed              */
-  urlEncode.in.36="0d"x; urlEncode.out.36="%0D" /* CR  carriage return        */
-  urlEncode.in.37="0e"x; urlEncode.out.37="%0E" /* SO  shift out              */
-  urlEncode.in.38="0f"x; urlEncode.out.38="%0F" /* SI  shift in               */
-  urlEncode.in.39="10"x; urlEncode.out.39="%10" /* DLE data link escape       */
-  urlEncode.in.40="11"x; urlEncode.out.40="%11" /* DC1 device control 1       */
-  urlEncode.in.41="12"x; urlEncode.out.41="%12" /* DC2 device control 2       */
-  urlEncode.in.42="13"x; urlEncode.out.42="%13" /* DC3 device control 3       */
-  urlEncode.in.43="14"x; urlEncode.out.43="%14" /* DC4 device control 4       */
-  urlEncode.in.44="15"x; urlEncode.out.44="%15" /* NAK negative acknowledge   */
-  urlEncode.in.45="16"x; urlEncode.out.45="%16" /* SYN synchronize            */
-  urlEncode.in.46="17"x; urlEncode.out.46="%17" /* ETB end transmission block */
-  urlEncode.in.47="18"x; urlEncode.out.47="%18" /* CAN cancel                 */
-  urlEncode.in.48="19"x; urlEncode.out.48="%19" /* EM  end of medium          */
-  urlEncode.in.49="1a"x; urlEncode.out.49="%1A" /* SUB substitute             */
-  urlEncode.in.50="1b"x; urlEncode.out.50="%1B" /* ESC escape                 */
-  urlEncode.in.51="1c"x; urlEncode.out.51="%1C" /* FS  file separator         */
-  urlEncode.in.52="1d"x; urlEncode.out.52="%1D" /* GS  group separator        */
-  urlEncode.in.53="1e"x; urlEncode.out.53="%1E" /* RS  record separator       */
-  urlEncode.in.54="1f"x; urlEncode.out.54="%1F" /* US  unit separator         */
-  urlEncode.in.55="7f"x; urlEncode.out.55="%7F" /* Delete                     */
+  urlEncode.in.29="00"x; urlEncode.out.29="%00" /* NUL null character         */
+  urlEncode.in.30="01"x; urlEncode.out.30="%01" /* SOH start of header        */
+  urlEncode.in.31="02"x; urlEncode.out.31="%02" /* STX start of text          */
+  urlEncode.in.32="03"x; urlEncode.out.32="%03" /* ETX end of text            */
+  urlEncode.in.33="04"x; urlEncode.out.33="%04" /* EOT end of transmission    */
+  urlEncode.in.34="05"x; urlEncode.out.34="%05" /* ENQ enquiry                */
+  urlEncode.in.35="06"x; urlEncode.out.35="%06" /* ACK acknowledge            */
+  urlEncode.in.36="07"x; urlEncode.out.36="%07" /* BEL bell (ring)            */
+  urlEncode.in.37="08"x; urlEncode.out.37="%08" /* BS  backspace              */
+  urlEncode.in.38="09"x; urlEncode.out.38="%09" /* HT  horizontal tab         */
+  urlEncode.in.39="0a"x; urlEncode.out.39="%0A" /* LF  line feed              */
+  urlEncode.in.40="0b"x; urlEncode.out.40="%0B" /* VT  vertical tab           */
+  urlEncode.in.41="0c"x; urlEncode.out.41="%0C" /* FF  form feed              */
+  urlEncode.in.42="0d"x; urlEncode.out.42="%0D" /* CR  carriage return        */
+  urlEncode.in.43="0e"x; urlEncode.out.43="%0E" /* SO  shift out              */
+  urlEncode.in.44="0f"x; urlEncode.out.44="%0F" /* SI  shift in               */
+  urlEncode.in.45="10"x; urlEncode.out.45="%10" /* DLE data link escape       */
+  urlEncode.in.46="11"x; urlEncode.out.46="%11" /* DC1 device control 1       */
+  urlEncode.in.47="12"x; urlEncode.out.47="%12" /* DC2 device control 2       */
+  urlEncode.in.48="13"x; urlEncode.out.48="%13" /* DC3 device control 3       */
+  urlEncode.in.49="14"x; urlEncode.out.49="%14" /* DC4 device control 4       */
+  urlEncode.in.50="15"x; urlEncode.out.50="%15" /* NAK negative acknowledge   */
+  urlEncode.in.51="16"x; urlEncode.out.51="%16" /* SYN synchronize            */
+  urlEncode.in.52="17"x; urlEncode.out.52="%17" /* ETB end transmission block */
+  urlEncode.in.53="18"x; urlEncode.out.53="%18" /* CAN cancel                 */
+  urlEncode.in.54="19"x; urlEncode.out.54="%19" /* EM  end of medium          */
+  urlEncode.in.55="1a"x; urlEncode.out.55="%1A" /* SUB substitute             */
+  urlEncode.in.56="1b"x; urlEncode.out.56="%1B" /* ESC escape                 */
+  urlEncode.in.57="1c"x; urlEncode.out.57="%1C" /* FS  file separator         */
+  urlEncode.in.58="1d"x; urlEncode.out.58="%1D" /* GS  group separator        */
+  urlEncode.in.59="1e"x; urlEncode.out.59="%1E" /* RS  record separator       */
+  urlEncode.in.60="1f"x; urlEncode.out.60="%1F" /* US  unit separator         */
+  urlEncode.in.61="7f"x; urlEncode.out.61="%7F" /* Delete                     */
 
-  urlEncode.max=55
+  urlEncode.max=61
 return
 
 guruError: procedure expose tr se gc c. g.
