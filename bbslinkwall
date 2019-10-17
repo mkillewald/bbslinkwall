@@ -113,10 +113,10 @@ g.timeout          = 20 /* API http request timeout in seconds */
 
 /* Set the default colors for prompts and messages */
 c.prompt           = esc"0;36m"
-c.highlight				 = esc"1;36m"
+c.highlight        = esc"1;36m"
 
 /* Ok to change these messages, feel free to add ANSI or MCI codes. */
-s.writeOnWallNo		 = "Write on the wall [y,"c.highlight"N"c.prompt"]? "
+s.writeOnWallNo    = "Write on the wall [y,"c.highlight"N"c.prompt"]? "
 s.writeOnWallYes   = "Write on the wall ["c.highlight"Y"c.prompt",n]? "
 s.retrieving       = "Retrieving Data"
 s.sending          = "Sending Data"
