@@ -21,7 +21,7 @@ changewhere "BBSLink Wall"
 /*     - Code cleanup and refactor                                        */
 /*     - Renamed g.logErrors switch to g.debug                            */
 /*     - Added g.defaultResponse and g.showCustomHeader switches          */
-/*     - Added c.prompt and c.highlight colors as options                 */
+/*     - Added c.default and c.highlight colors as options                */
 /*     - Added custom header files with 40/80 column support              */
 /*     - Added URL encoding                                               */
 /*                                                                        */
@@ -112,18 +112,18 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
 g.timeout          = 20 /* API http request timeout in seconds */
 
 /* Set the default colors for prompts and messages */
-c.prompt           = esc"0;36m"
+c.default          = esc"0;36m"
 c.highlight        = esc"1;36m"
 
 /* Ok to change these messages, feel free to add ANSI or MCI codes. */
-s.writeOnWallNo    = "Write on the wall [y,"c.highlight"N"c.prompt"]? "
-s.writeOnWallYes   = "Write on the wall ["c.highlight"Y"c.prompt",n]? "
+s.writeOnWallNo    = "Write on the wall [y,"c.highlight"N"c.default"]? "
+s.writeOnWallYes   = "Write on the wall ["c.highlight"Y"c.default",n]? "
 s.retrieving       = "Retrieving Data"
 s.sending          = "Sending Data"
 s.reqTimedOut      = "Request timed out, please try again later."
 s.cancelled        = "Request Cancelled"
-s.escToCancel      = "("c.highlight"ESC"c.prompt" to cancel)"
-s.anyKey           = "Smash "c.highlight"any key"c.prompt" to continue.."
+s.escToCancel      = "("c.highlight"ESC"c.default" to cancel)"
+s.anyKey           = "Smash "c.highlight"any key"c.default" to continue.."
 
 /* End of SysOp Configurable Options **************************************/
 /**************************************************************************/
@@ -142,7 +142,7 @@ g.debug = g.debug&g.uid==1
 if ~exists("c:http_get") then signal badHttp
 
 /* Show the wall! */
-se c.prompt
+se c.default
 call getWall
 
 /* Ask user if they want to write to the wall themselves */
@@ -416,7 +416,7 @@ getWall: procedure expose se tr mg esc ver ctq c. s. g. resultArr.
     end
   end
 
-  se c.prompt
+  se c.default
 
   /* Delete the results file */
   call deleteFile(filename)
