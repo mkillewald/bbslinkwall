@@ -21,7 +21,8 @@ changewhere "BBSLink Wall"
 /*     - Code cleanup and refactor                                        */
 /*     - Renamed g.logErrors switch to g.debug                            */
 /*     - Added g.defaultResponse and g.showCustomHeader switches          */
-/*     - Added custom header files                                        */
+/*     - Added c.prompt and c.highlight colors as options                 */
+/*     - Added custom header files with 40/80 column support              */
 /*     - Added URL encoding                                               */
 /*                                                                        */
 /*    v2.0.0 (4 Sep 2019) by k1ds3ns4t10n of -X-caliber BBS               */
@@ -37,7 +38,7 @@ changewhere "BBSLink Wall"
 /*                                                                        */
 /*  CheckSum Acknowledged BBS has gone offline as of: 15 Jul 2019 :(      */
 /*                                                                        */
-/*  Use at your own risk.                                                 */
+/*  This is public domain software. Use at your own risk.                 */
 /*                                                                        */
 /*  INSTALATION INSTRUCTIONS:                                             */
 /*                                                                        */
@@ -110,16 +111,19 @@ g.debug            = 0  /* Show Errors to the SysOp's (account 1) screen.
 /* Ok to change these as needed for your system */
 g.timeout          = 20 /* API http request timeout in seconds */
 
-/* Set the default color for prompts and messages */
-c.default          = esc"0;36m"
+/* Set the default colors for prompts and messages */
+c.prompt           = esc"0;36m"
+c.highlight				 = esc"1;36m"
 
 /* Ok to change these messages, feel free to add ANSI or MCI codes. */
+s.writeOnWallNo		 = "Write on the wall [y,"c.highlight"N"c.prompt"]? "
+s.writeOnWallYes   = "Write on the wall ["c.highlight"Y"c.prompt",n]? "
 s.retrieving       = "Retrieving Data"
 s.sending          = "Sending Data"
 s.reqTimedOut      = "Request timed out, please try again later."
 s.cancelled        = "Request Cancelled"
-s.escToCancel      = "(ESC to cancel)"
-s.anyKey           = "Smash any key to continue.."
+s.escToCancel      = "("c.highlight"ESC"c.prompt" to cancel)"
+s.anyKey           = "Smash "c.highlight"any key"c.prompt" to continue.."
 
 /* End of SysOp Configurable Options **************************************/
 /**************************************************************************/
@@ -138,12 +142,12 @@ g.debug = g.debug&g.uid==1
 if ~exists("c:http_get") then signal badHttp
 
 /* Show the wall! */
-se c.default
+se c.prompt
 call getWall
 
 /* Ask user if they want to write to the wall themselves */
-if g.defaultResponse then prompt 5 YESNO "Write on the wall [Y,n]? "
-else prompt 5 NOYES "Write on the wall [y,N]? "
+if g.defaultResponse then prompt 5 YESNO s.writeOnWallYES
+else prompt 5 NOYES s.writeOnWallNo
 
 /* If they answered no, quit. */
 if result=='No' then exit
@@ -412,7 +416,7 @@ getWall: procedure expose se tr mg esc ver ctq c. s. g. resultArr.
     end
   end
 
-  se c.default
+  se c.prompt
 
   /* Delete the results file */
   call deleteFile(filename)
