@@ -407,6 +407,9 @@ getWall: procedure expose se tr mg esc ver ctq c. s. g. resultArr.
 
     /* show remaining portion of the wall */
     do i=8 to resultArr.0
+      if g.showCustomHeader & g.termType == 3 & g.maxCol>=79 then
+        /* change color of poster's name */
+        resultArr.i = replace(resultArr.i, "1;34m", "0;35m")
       tr resultArr.i
       checkabort
       if result == 1 then do
@@ -569,7 +572,9 @@ mySendFile: procedure expose tr
 
   if open(BLWF, filePath, R) then do
     do while ~eof(BLWF)
-      tr readln(BLWF)
+      line = readln(BLWF)
+      if index(line, "1A"x||"SAUCE00") == 1 then leave
+      tr line
       checkabort
       if result == 1 then do
         tr
