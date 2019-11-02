@@ -1,5 +1,5 @@
 /**************************************************************************\
-$VER: BBSLinkWall, v2.0.1 (Sep-11-2019) by k1ds3ns4t10n of -X-caliber BBS
+$VER: BBSLinkWall, v2.0.1 (2 Nov 2019) by k1ds3ns4t10n of -X-caliber BBS
 \**************************************************************************/
 options results;signal on SYNTAX;signal on ERROR;signal on IOERR
 a=sourceline(2);parse var a . " " title ", " ver " (" vdate ") by " author " " .
@@ -17,7 +17,7 @@ changewhere "BBSLink Wall"
 /*    networked Graffiti Wall.                                            */
 /*                                                                        */
 /*  Changelog:                                                            */
-/*    v2.0.1 (          ) by k1ds3ns4t10n of -X-caliber BBS               */
+/*    v2.0.1 (2 Nov 2019) by k1ds3ns4t10n of -X-caliber BBS               */
 /*     - Code cleanup and refactor                                        */
 /*     - Renamed g.logErrors switch to g.debug                            */
 /*     - Added g.defaultResponse and g.showCustomHeader switches          */
