@@ -18,7 +18,7 @@ Changelog:
    - Code cleanup and refactor
    - Renamed g.logErrors switch to g.debug
    - Added g.defaultResponse and g.showCustomHeader switches
-   - Added c.prompt and c.highlight colors as options
+   - Added c.default and c.highlight colors as options
    - Added custom header files with 40/80 column support
    - Added URL encoding
 
