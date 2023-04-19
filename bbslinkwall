@@ -1,5 +1,5 @@
 /**************************************************************************\
-$VER: BBSLinkWall, v2.0.1 (2 Nov 2019) by k1ds3ns4t10n of -X-caliber BBS
+$VER: BBSLinkWall, v2.0.1 (3 March 2019) by k1ds3ns4t10n of -X-caliber BBS
 \**************************************************************************/
 options results;signal on SYNTAX;signal on ERROR;signal on IOERR
 a=sourceline(2);parse var a . " " title ", " ver " (" vdate ") by " author " " .
@@ -17,12 +17,13 @@ changewhere "BBSLink Wall"
 /*    networked Graffiti Wall.                                            */
 /*                                                                        */
 /*  Changelog:                                                            */
-/*    v2.0.1 (2 Nov 2019) by k1ds3ns4t10n of -X-caliber BBS               */
+/*    v2.0.1 (3 Mar 2019) by k1ds3ns4t10n of -X-caliber BBS               */
 /*     - Code cleanup and refactor                                        */
 /*     - Renamed g.logErrors switch to g.debug                            */
 /*     - Added g.defaultResponse and g.showCustomHeader switches          */
 /*     - Added c.default and c.highlight colors as options                */
 /*     - Added custom header files with 40/80 column support              */
+/*     - Added minimum access group needed to post                        */
 /*     - Added URL encoding                                               */
 /*                                                                        */
 /*    v2.0.0 (4 Sep 2019) by k1ds3ns4t10n of -X-caliber BBS               */
@@ -86,7 +87,9 @@ g.tempPath         = "RAM:BBSLINK/"    /* must end with a trailing slash */
    type here. Additionally, if the users term width is less than 80, then a 40
    column header file will be searched for by appending "40" to the end of this
    filename. */
-g.wallHeaderFile   = g.pfilePath||"sys.wallHeader"
+g.wallHeaderFile   = "sys.wallHeader"
+
+g.minAccessGroup   = 1 /* the minimum access group user must have to post */
 
 /* These swtiches control how the Wall functions */
 g.defaultResponse  = 0  /* Set default response to the "Write on Wall" prompt.
@@ -114,6 +117,7 @@ g.timeout          = 20 /* API http request timeout in seconds */
 /* Set the default colors for prompts and messages */
 c.default          = esc"0;36m"
 c.highlight        = esc"1;36m"
+c.error            = esc"0;31m"
 
 /* Ok to change these messages, feel free to add ANSI or MCI codes. */
 s.writeOnWallNo    = "Write on the wall [y,"c.highlight"N"c.default"]? "
@@ -128,7 +132,8 @@ s.anyKey           = "Smash "c.highlight"any key"c.default" to continue.."
 /* End of SysOp Configurable Options **************************************/
 /**************************************************************************/
 
-c.err  = esc"0;31m"
+/* TODO: change debug statements to use logentry */
+
 c.blink= esc"5m"
 c.reset= esc"0m"
 
@@ -137,7 +142,9 @@ if ~exists(g.tempPath) then address command'makedir 'strip(g.tempPath,"T","/")
 gu 40; g.uid = space(result ,0)  /* account id */
 gu 27; g.maxCol=result-1         /* term width */
 gu 28; g.termType=result         /* term type  */
+gu 15; accessGroup=result        /* access group */ 
 g.debug = g.debug&g.uid==1
+g.wallHeaderFile = df||g.wallHeaderFile
 
 if ~exists("c:http_get") then signal badHttp
 
@@ -145,13 +152,16 @@ if ~exists("c:http_get") then signal badHttp
 se c.default
 call getWall
 
-/* Ask user if they want to write to the wall themselves */
-if g.defaultResponse then prompt 5 YESNO s.writeOnWallYES
-else prompt 5 NOYES s.writeOnWallNo
-
-/* If they answered no, quit. */
-if result=='No' then exit
-else call check
+if accessGroup >= g.minAccessGroup then do
+	/* Ask user if they want to write to the wall themselves */
+	if g.defaultResponse then prompt 5 YESNO s.writeOnWallYES
+	else prompt 5 NOYES s.writeOnWallNo
+	
+	/* If they answered no, quit. */
+	if result=='No' then exit
+	else call check
+end
+else signal EXIT
 
 /* Find out if user already has a registered user name */
 tr "  Looking for your pen - it's around here somewhere..."
@@ -315,15 +325,14 @@ fetchWebRequest: procedure expose se tr mg esc ver s. g. resultArr.
 
     bufferflush
     do until time('e') > g.timeout + 1
-      mg
-      if result=="NOCHAR" then nop
-      else if C2D(result)==27 then do
+      mg; ans=result; call check
+      if ans=="NOCHAR" then nop
+      else if C2D(ans)==27 | upper(ans)=="Q" then do
         /* ESC key will exit */
         resultArr.0 = 1
         resultArr.1 = s.cancelled
         leave /* cause loop to exit */
       end
-      else call check
 
       call delay(25) /* 1/2 second */
 
@@ -407,17 +416,19 @@ getWall: procedure expose se tr mg esc ver ctq c. s. g. resultArr.
 
     /* show remaining portion of the wall */
     if g.maxCol >= 79 then se ctq"@4}" /* disable more */
-    do i=8 to resultArr.0
+    do i=8 to resultArr.0 - 1
       if g.showCustomHeader & g.termType == 3 & g.maxCol>=79 then
-        /* change color of poster's name */
+        /* change color of poster's name, a special request by aNACHRONiST */
         resultArr.i = replace(resultArr.i, "1;34m", "0;35m")
-      tr resultArr.i
-      checkabort
-      if result == 1 then do
-        tr
-        leave
+      if g.maxcol<79 then do
+      	parse var resultArr.i color user message  
+      	tr strip(color, "B")strip(user, "B")": "strip(message, "B", " "||"0a"x||"0d"x)
       end
+      else tr resultArr.i
+      checkabort
+      if result == 1 then leave
     end
+    tr
   end
 
   se c.default
@@ -696,23 +707,23 @@ return
 guruError: procedure expose tr se gc c. g.
   parse arg errMsg1, errMsg2
   cls
-  tr c.err
+  tr c.error
 
   tr c.blink"Û"copies('ß', g.maxCol-2)"Û"
 
   call wordWrap(errMsg1, g.maxCol-4)
   do i=1 to resultArr.0
-    tr c.blink"Û "c.reset||c.err|| center(resultArr.i, g.maxCol-4)||c.blink" Û"
+    tr c.blink"Û "c.reset||c.error|| center(resultArr.i, g.maxCol-4)||c.blink" Û"
   end
 
   call wordWrap(errMsg2, g.maxCol-4)
   do i=1 to resultArr.0
-    tr c.blink"Û "c.reset||c.err|| center(resultArr.i, g.maxCol-4)||c.blink" Û"
+    tr c.blink"Û "c.reset||c.error|| center(resultArr.i, g.maxCol-4)||c.blink" Û"
   end
 
   tr c.blink"Û"copies('Ü', g.maxCol-2)"Û"c.reset
   tr
-  se c.err||center("Press ANY KEY to continue..", g.maxCol)
+  se c.error||center("Press ANY KEY to continue..", g.maxCol)
   gc
 return
 
